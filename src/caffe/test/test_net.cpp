@@ -55,7 +55,8 @@ class NetTest : public ::testing::Test {
     }
   }
 
-  virtual void InitTinyNet(const bool force_backward = false) {
+  virtual void InitTinyNet(const bool force_backward = false,
+                           const bool accuracy_layer = false) {
     string proto =
         "name: 'TinyTestNetwork' "
         "layers: { "
@@ -106,6 +107,16 @@ class NetTest : public ::testing::Test {
         "  bottom: 'label' "
         "  top: 'top_loss' "
         "} ";
+    if (accuracy_layer) {
+      proto +=
+          "layers: { "
+          "  name: 'loss' "
+          "  type: ACCURACY "
+          "  bottom: 'innerproduct' "
+          "  bottom: 'label' "
+          "  top: 'accuracy' "
+          "} ";
+    }
     if (force_backward) {
       proto += "force_backward: true ";
     }
@@ -1017,6 +1028,16 @@ TYPED_TEST(NetTest, TestComboLossWeightGPU) {
   EXPECT_GT(fabs(loss_diff_2), kMinLossDiffAbsValue);
   loss_diff_3 = loss_midnet_3 - loss;
   EXPECT_NEAR(2 * loss_diff_2, loss_diff_3, kErrorMargin);
+}
+
+TYPED_TEST(NetTest, TestBackwardWithAccuracyLayer) {
+  const bool kForceBackward = false;
+  const bool kAccuracyLayer = true;
+  this->InitTinyNet(kForceBackward, kAccuracyLayer);
+  EXPECT_TRUE(this->net_->has_blob("accuracy"));
+  vector<Blob<TypeParam>*> bottom;
+  // Test that we can do Backward even though we have an ACCURACY layer.
+  this->net_->ForwardBackward(bottom);
 }
 
 TYPED_TEST(NetTest, TestUnsharedWeightsDataNet) {
