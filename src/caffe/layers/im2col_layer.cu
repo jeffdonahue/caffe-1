@@ -10,7 +10,7 @@
 namespace caffe {
 
 template <typename Dtype>
-Dtype Im2colLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+void Im2colLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   const Dtype* bottom_data = bottom[0]->gpu_data();
   Dtype* top_data = (*top)[0]->mutable_gpu_data();
@@ -18,7 +18,6 @@ Dtype Im2colLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     im2col_gpu(bottom_data + bottom[0]->offset(n), channels_, height_,
         width_, kernel_size_, pad_, stride_, top_data + (*top)[0]->offset(n));
   }
-  return Dtype(0.);
 }
 
 template <typename Dtype>

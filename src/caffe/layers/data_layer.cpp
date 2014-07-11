@@ -169,9 +169,8 @@ DataLayer<Dtype>::~DataLayer<Dtype>() {
 }
 
 template <typename Dtype>
-void DataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+void DataLayer<Dtype>::FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
   if (top->size() == 1) {
     output_labels_ = false;
   } else {
@@ -346,7 +345,7 @@ unsigned int DataLayer<Dtype>::PrefetchRand() {
 }
 
 template <typename Dtype>
-Dtype DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   // First, join the thread
   JoinPrefetchThread();
@@ -359,7 +358,6 @@ Dtype DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   }
   // Start a new prefetch thread
   CreatePrefetchThread();
-  return Dtype(0.);
 }
 
 INSTANTIATE_CLASS(DataLayer);

@@ -11,6 +11,7 @@
 #include "caffe/common.hpp"
 #include "caffe/filler.hpp"
 #include "caffe/vision_layers.hpp"
+#include "caffe/proto/caffe.pb.h"
 #include "caffe/test/test_gradient_check_util.hpp"
 #include "caffe/util/insert_splits.hpp"
 

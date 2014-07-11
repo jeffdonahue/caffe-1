@@ -11,9 +11,8 @@
 namespace caffe {
 
 template <typename Dtype>
-void ConvolutionLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+void ConvolutionLayer<Dtype>::FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
   kernel_size_ = this->layer_param_.convolution_param().kernel_size();
   stride_ = this->layer_param_.convolution_param().stride();
   group_ = this->layer_param_.convolution_param().group();
@@ -89,7 +88,7 @@ void ConvolutionLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
 
 
 template <typename Dtype>
-Dtype ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   for (int i = 0; i < bottom.size(); ++i) {
     const Dtype* bottom_data = bottom[i]->cpu_data();
@@ -118,7 +117,6 @@ Dtype ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       }
     }
   }
-  return Dtype(0.);
 }
 
 template <typename Dtype>

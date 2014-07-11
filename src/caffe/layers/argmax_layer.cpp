@@ -10,9 +10,8 @@
 namespace caffe {
 
 template <typename Dtype>
-void ArgMaxLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+void ArgMaxLayer<Dtype>::FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
   out_max_val_ = this->layer_param_.argmax_param().out_max_val();
   if (out_max_val_) {
     // Produces max_ind and max_val
@@ -24,7 +23,7 @@ void ArgMaxLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-Dtype ArgMaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void ArgMaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = (*top)[0]->mutable_cpu_data();
@@ -46,7 +45,6 @@ Dtype ArgMaxLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       top_data[i] = max_ind;
     }
   }
-  return Dtype(0);
 }
 
 INSTANTIATE_CLASS(ArgMaxLayer);

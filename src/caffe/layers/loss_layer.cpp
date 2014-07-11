@@ -15,16 +15,15 @@ using std::max;
 namespace caffe {
 
 template <typename Dtype>
-void LossLayer<Dtype>::SetUp(
+void LossLayer<Dtype>::FurtherSetUp(
     const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
   CHECK_EQ(bottom[0]->num(), bottom[1]->num())
       << "The data and label should have the same number.";
-  if (top->size() == 1) {
-  // Layers should copy the loss in the top blob
-    (*top)[0]->Reshape(1, 1, 1, 1);
+  (*top)[0]->Reshape(1, 1, 1, 1);
+  // LossLayers have a non-zero (1) loss by default.
+  if (this->layer_param_.top_loss_weight_size() == 0) {
+    this->layer_param_.add_top_loss_weight(Dtype(1));
   }
-  FurtherSetUp(bottom, top);
 }
 
 INSTANTIATE_CLASS(LossLayer);

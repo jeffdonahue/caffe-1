@@ -13,9 +13,9 @@
 namespace caffe {
 
 template <typename Dtype>
-void DropoutLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+void DropoutLayer<Dtype>::FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  NeuronLayer<Dtype>::SetUp(bottom, top);
+  NeuronLayer<Dtype>::FurtherSetUp(bottom, top);
   // Set up the cache for random number generation
   rand_vec_.reset(new Blob<unsigned int>(bottom[0]->num(),
       bottom[0]->channels(), bottom[0]->height(), bottom[0]->width()));
@@ -27,7 +27,7 @@ void DropoutLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-Dtype DropoutLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void DropoutLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = (*top)[0]->mutable_cpu_data();
@@ -42,7 +42,6 @@ Dtype DropoutLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   } else {
     caffe_copy(bottom[0]->count(), bottom_data, top_data);
   }
-  return Dtype(0);
 }
 
 template <typename Dtype>

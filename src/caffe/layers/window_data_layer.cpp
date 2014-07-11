@@ -87,7 +87,7 @@ void* WindowDataLayerPrefetch(void* layer_pointer) {
       cv::Mat cv_img = cv::imread(image.first, CV_LOAD_IMAGE_COLOR);
       if (!cv_img.data) {
         LOG(ERROR) << "Could not open or find file " << image.first;
-        return reinterpret_cast<void*>(NULL);
+        return static_cast<void*>(NULL);
       }
       const int channels = cv_img.channels();
 
@@ -247,7 +247,7 @@ void* WindowDataLayerPrefetch(void* layer_pointer) {
     }
   }
 
-  return reinterpret_cast<void*>(NULL);
+  return static_cast<void*>(NULL);
 }
 
 template <typename Dtype>
@@ -256,10 +256,9 @@ WindowDataLayer<Dtype>::~WindowDataLayer<Dtype>() {
 }
 
 template <typename Dtype>
-void WindowDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+void WindowDataLayer<Dtype>::FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
-  // SetUp runs through the window_file and creates two structures
+  // FurtherSetUp runs through the window_file and creates two structures
   // that hold windows: one for foreground (object) windows and one
   // for background (non-object) windows. We use an overlap threshold
   // to decide which is which.
@@ -439,7 +438,7 @@ unsigned int WindowDataLayer<Dtype>::PrefetchRand() {
 }
 
 template <typename Dtype>
-Dtype WindowDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void WindowDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   // First, join the thread
   JoinPrefetchThread();
@@ -450,7 +449,6 @@ Dtype WindowDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
              (*top)[1]->mutable_cpu_data());
   // Start a new prefetch thread
   CreatePrefetchThread();
-  return Dtype(0.);
 }
 
 INSTANTIATE_CLASS(WindowDataLayer);

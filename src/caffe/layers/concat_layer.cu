@@ -9,7 +9,7 @@
 namespace caffe {
 
 template <typename Dtype>
-Dtype ConcatLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+void ConcatLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   Dtype* top_data = (*top)[0]->mutable_gpu_data();
   if (concat_dim_ == 0) {
@@ -36,7 +36,6 @@ Dtype ConcatLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
     LOG(FATAL) << "concat_dim along dim" << concat_dim_ <<
       " not implemented yet";
   }
-  return Dtype(0.);
 }
 
 template <typename Dtype>

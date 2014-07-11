@@ -26,7 +26,7 @@ template <typename Dtype>
 void* ImageDataLayerPrefetch(void* layer_pointer) {
   CHECK(layer_pointer);
   ImageDataLayer<Dtype>* layer =
-      reinterpret_cast<ImageDataLayer<Dtype>*>(layer_pointer);
+      static_cast<ImageDataLayer<Dtype>*>(layer_pointer);
   CHECK(layer);
   Datum datum;
   CHECK(layer->prefetch_data_);
@@ -129,7 +129,7 @@ void* ImageDataLayerPrefetch(void* layer_pointer) {
     }
   }
 
-  return reinterpret_cast<void*>(NULL);
+  return static_cast<void*>(NULL);
 }
 
 template <typename Dtype>
@@ -138,11 +138,10 @@ ImageDataLayer<Dtype>::~ImageDataLayer<Dtype>() {
 }
 
 template <typename Dtype>
-void ImageDataLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+void ImageDataLayer<Dtype>::FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
-  const int new_height  = this->layer_param_.image_data_param().new_height();
-  const int new_width  = this->layer_param_.image_data_param().new_height();
+  const int new_height = this->layer_param_.image_data_param().new_height();
+  const int new_width = this->layer_param_.image_data_param().new_height();
   CHECK((new_height == 0 && new_width == 0) ||
       (new_height > 0 && new_width > 0)) << "Current implementation requires "
       "new_height and new_width to be set at the same time.";
@@ -273,7 +272,7 @@ unsigned int ImageDataLayer<Dtype>::PrefetchRand() {
 }
 
 template <typename Dtype>
-Dtype ImageDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void ImageDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   // First, join the thread
   JoinPrefetchThread();
@@ -284,7 +283,6 @@ Dtype ImageDataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
              (*top)[1]->mutable_cpu_data());
   // Start a new prefetch thread
   CreatePrefetchThread();
-  return Dtype(0.);
 }
 
 INSTANTIATE_CLASS(ImageDataLayer);

@@ -11,7 +11,7 @@ using std::max;
 namespace caffe {
 
 template <typename Dtype>
-Dtype ReLULayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void ReLULayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     vector<Blob<Dtype>*>* top) {
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = (*top)[0]->mutable_cpu_data();
@@ -19,7 +19,6 @@ Dtype ReLULayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   for (int i = 0; i < count; ++i) {
     top_data[i] = max(bottom_data[i], Dtype(0));
   }
-  return Dtype(0);
 }
 
 template <typename Dtype>

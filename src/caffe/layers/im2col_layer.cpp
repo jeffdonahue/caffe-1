@@ -10,9 +10,8 @@
 namespace caffe {
 
 template <typename Dtype>
-void Im2colLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
+void Im2colLayer<Dtype>::FurtherSetUp(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
-  Layer<Dtype>::SetUp(bottom, top);
   kernel_size_ = this->layer_param_.convolution_param().kernel_size();
   stride_ = this->layer_param_.convolution_param().stride();
   pad_ = this->layer_param_.convolution_param().pad();
@@ -25,7 +24,7 @@ void Im2colLayer<Dtype>::SetUp(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-Dtype Im2colLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+void Im2colLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       vector<Blob<Dtype>*>* top) {
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = (*top)[0]->mutable_cpu_data();
@@ -33,7 +32,6 @@ Dtype Im2colLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     im2col_cpu(bottom_data + bottom[0]->offset(n), channels_, height_,
         width_, kernel_size_, pad_, stride_, top_data + (*top)[0]->offset(n));
   }
-  return Dtype(0.);
 }
 
 template <typename Dtype>
