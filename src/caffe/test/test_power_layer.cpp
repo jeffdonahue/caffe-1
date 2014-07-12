@@ -93,164 +93,74 @@ class PowerLayerTest : public ::testing::Test {
 typedef ::testing::Types<float, double> Dtypes;
 TYPED_TEST_CASE(PowerLayerTest, Dtypes);
 
-TYPED_TEST(PowerLayerTest, TestPowerCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPower,
   TypeParam power = 0.37;
   TypeParam scale = 0.83;
   TypeParam shift = -2.4;
   this->TestForward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerGradientCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerGradient,
   TypeParam power = 0.37;
   TypeParam scale = 0.83;
   TypeParam shift = -2.4;
   this->TestBackward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerGradientShiftZeroCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerGradientShiftZero,
   TypeParam power = 0.37;
   TypeParam scale = 0.83;
   TypeParam shift = 0.0;
   this->TestBackward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerZeroCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerZero,
   TypeParam power = 0.0;
   TypeParam scale = 0.83;
   TypeParam shift = -2.4;
   this->TestForward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerZeroGradientCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerZeroGradient,
   TypeParam power = 0.0;
   TypeParam scale = 0.83;
   TypeParam shift = -2.4;
   this->TestBackward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerOneCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerOne,
   TypeParam power = 1.0;
   TypeParam scale = 0.83;
   TypeParam shift = -2.4;
   this->TestForward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerOneGradientCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerOneGradient,
   TypeParam power = 1.0;
   TypeParam scale = 0.83;
   TypeParam shift = -2.4;
   this->TestBackward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerTwoCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerTwo,
   TypeParam power = 2.0;
   TypeParam scale = 0.34;
   TypeParam shift = -2.4;
   this->TestForward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerTwoGradientCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerTwoGradient,
   TypeParam power = 2.0;
   TypeParam scale = 0.83;
   TypeParam shift = -2.4;
   this->TestBackward(power, scale, shift);
-}
+)
 
-TYPED_TEST(PowerLayerTest, TestPowerTwoScaleHalfGradientCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerTwoScaleHalfGradient,
   TypeParam power = 2.0;
   TypeParam scale = 0.5;
   TypeParam shift = -2.4;
   this->TestBackward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 0.37;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
-  this->TestForward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerGradientGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 0.37;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
-  this->TestBackward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerGradientShiftZeroGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 0.37;
-  TypeParam scale = 0.83;
-  TypeParam shift = 0.0;
-  this->TestBackward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerZeroGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 0.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
-  this->TestForward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerZeroGradientGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 0.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
-  this->TestBackward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerOneGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 1.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
-  this->TestForward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerOneGradientGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 1.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
-  this->TestBackward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerTwoGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 2.0;
-  TypeParam scale = 0.34;
-  TypeParam shift = -2.4;
-  this->TestForward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerTwoGradientGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 2.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
-  this->TestBackward(power, scale, shift);
-}
-
-TYPED_TEST(PowerLayerTest, TestPowerTwoScaleHalfGradientGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  TypeParam power = 2.0;
-  TypeParam scale = 0.5;
-  TypeParam shift = -2.4;
-  this->TestBackward(power, scale, shift);
-}
+)
 
 }  // namespace caffe

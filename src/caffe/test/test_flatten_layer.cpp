@@ -51,10 +51,9 @@ TYPED_TEST(FlattenLayerTest, TestSetup) {
   EXPECT_EQ(this->blob_top_->width(), 1);
 }
 
-TYPED_TEST(FlattenLayerTest, TestCPU) {
+TYPED_TEST_ALL_DEVICES(FlattenLayerTest, Test,
   LayerParameter layer_param;
   FlattenLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::CPU);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   for (int c = 0; c < 3 * 6 * 5; ++c) {
@@ -63,39 +62,15 @@ TYPED_TEST(FlattenLayerTest, TestCPU) {
     EXPECT_EQ(this->blob_top_->data_at(1, c, 0, 0),
         this->blob_bottom_->data_at(1, c / (6 * 5), (c / 5) % 6, c % 5));
   }
-}
+)
 
-TYPED_TEST(FlattenLayerTest, TestGPU) {
+TYPED_TEST_ALL_DEVICES(FlattenLayerTest, TestGradient,
   LayerParameter layer_param;
-  FlattenLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::GPU);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  for (int c = 0; c < 3 * 6 * 5; ++c) {
-    EXPECT_EQ(this->blob_top_->data_at(0, c, 0, 0),
-        this->blob_bottom_->data_at(0, c / (6 * 5), (c / 5) % 6, c % 5));
-    EXPECT_EQ(this->blob_top_->data_at(1, c, 0, 0),
-        this->blob_bottom_->data_at(1, c / (6 * 5), (c / 5) % 6, c % 5));
-  }
-}
-
-TYPED_TEST(FlattenLayerTest, TestCPUGradient) {
-  LayerParameter layer_param;
-  Caffe::set_mode(Caffe::CPU);
   FlattenLayer<TypeParam> layer(layer_param);
   GradientChecker<TypeParam> checker(1e-2, 1e-2);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-}
-
-TYPED_TEST(FlattenLayerTest, TestGPUGradient) {
-  LayerParameter layer_param;
-  Caffe::set_mode(Caffe::GPU);
-  FlattenLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2);
-  checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
-      &(this->blob_top_vec_));
-}
+)
 
 
 }  // namespace caffe

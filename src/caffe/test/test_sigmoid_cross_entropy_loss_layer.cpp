@@ -99,35 +99,19 @@ typedef ::testing::Types<float, double> Dtypes;
 TYPED_TEST_CASE(SigmoidCrossEntropyLossLayerTest, Dtypes);
 
 
-TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestSigmoidCrossEntropyLossCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(SigmoidCrossEntropyLossLayerTest,
+                       TestSigmoidCrossEntropyLoss,
   this->TestForward();
-}
+)
 
-TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestSigmoidCrossEntropyLossGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  this->TestForward();
-}
-
-TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestGradientCPU) {
+TYPED_TEST_ALL_DEVICES(SigmoidCrossEntropyLossLayerTest, TestGradient,
   LayerParameter layer_param;
-  Caffe::set_mode(Caffe::CPU);
   SigmoidCrossEntropyLossLayer<TypeParam> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
   GradientChecker<TypeParam> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_), 0, -1, -1);
-}
-
-TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestGradientGPU) {
-  LayerParameter layer_param;
-  Caffe::set_mode(Caffe::GPU);
-  SigmoidCrossEntropyLossLayer<TypeParam> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2, 1701);
-  checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
-      &(this->blob_top_vec_), 0, -1, -1);
-}
+)
 
 
 }  // namespace caffe

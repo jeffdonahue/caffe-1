@@ -54,31 +54,13 @@ TYPED_TEST(Im2colLayerTest, TestSetup) {
   EXPECT_EQ(this->blob_top_->width(), 2);
 }
 
-TYPED_TEST(Im2colLayerTest, TestCPU) {
+TYPED_TEST_ALL_DEVICES(Im2colLayerTest, TestForward,
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
   convolution_param->set_kernel_size(3);
   convolution_param->set_stride(2);
   Im2colLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::CPU);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  // We are lazy and will only check the top left block
-  for (int c = 0; c < 27; ++c) {
-    EXPECT_EQ(this->blob_top_->data_at(0, c, 0, 0),
-        this->blob_bottom_->data_at(0, (c / 9), (c / 3) % 3, c % 3));
-  }
-}
-
-TYPED_TEST(Im2colLayerTest, TestGPU) {
-  LayerParameter layer_param;
-  ConvolutionParameter* convolution_param =
-      layer_param.mutable_convolution_param();
-  convolution_param->set_kernel_size(3);
-  convolution_param->set_stride(2);
-  Im2colLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::GPU);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // We are lazy and will only check the top left block
@@ -86,33 +68,19 @@ TYPED_TEST(Im2colLayerTest, TestGPU) {
     EXPECT_EQ(this->blob_bottom_->data_at(0, (c / 9), (c / 3) % 3, c % 3),
         this->blob_top_->data_at(0, c, 0, 0));
   }
-}
+)
 
-TYPED_TEST(Im2colLayerTest, TestCPUGradient) {
+TYPED_TEST_ALL_DEVICES(Im2colLayerTest, TestGradient,
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
   convolution_param->set_kernel_size(3);
   convolution_param->set_stride(2);
-  Caffe::set_mode(Caffe::CPU);
   Im2colLayer<TypeParam> layer(layer_param);
   GradientChecker<TypeParam> checker(1e-2, 1e-2);
   checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-}
-
-TYPED_TEST(Im2colLayerTest, TestGPUGradient) {
-  LayerParameter layer_param;
-  ConvolutionParameter* convolution_param =
-      layer_param.mutable_convolution_param();
-  convolution_param->set_kernel_size(3);
-  convolution_param->set_stride(2);
-  Caffe::set_mode(Caffe::GPU);
-  Im2colLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2);
-  checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
-      &(this->blob_top_vec_));
-}
+)
 
 
 }  // namespace caffe

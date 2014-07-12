@@ -22,7 +22,7 @@ class GemmTest : public ::testing::Test {};
 
 TYPED_TEST_CASE(GemmTest, Dtypes);
 
-TYPED_TEST(GemmTest, TestGemm) {
+TYPED_TEST(GemmTest, TestGemmCPUGPU) {
   Blob<TypeParam> A(1, 1, 2, 3);
   Blob<TypeParam> B(1, 1, 3, 4);
   Blob<TypeParam> C(1, 1, 2, 4);
@@ -93,7 +93,7 @@ TYPED_TEST(GemmTest, TestGemm) {
 }
 
 
-TYPED_TEST(GemmTest, TestGemv) {
+TYPED_TEST(GemmTest, TestGemvCPUGPU) {
   Blob<TypeParam> A(1, 1, 2, 3);
   Blob<TypeParam> x(1, 1, 1, 3);
   Blob<TypeParam> y(1, 1, 1, 2);

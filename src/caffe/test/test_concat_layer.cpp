@@ -82,10 +82,9 @@ TYPED_TEST(ConcatLayerTest, TestSetupChannels) {
 }
 
 
-TYPED_TEST(ConcatLayerTest, TestCPUNum) {
+TYPED_TEST_ALL_DEVICES(ConcatLayerTest, TestNum,
   LayerParameter layer_param;
   ConcatLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::CPU);
   layer.SetUp(this->blob_bottom_vec_0, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_0, &(this->blob_top_vec_));
   for (int n = 0; n < this->blob_top_->num(); ++n) {
@@ -106,25 +105,14 @@ TYPED_TEST(ConcatLayerTest, TestCPUNum) {
       }
     }
   }
-}
+)
 
-
-TYPED_TEST(ConcatLayerTest, TestCPUGradient) {
+TYPED_TEST_ALL_DEVICES(ConcatLayerTest, TestGradient,
   LayerParameter layer_param;
-  Caffe::set_mode(Caffe::CPU);
   ConcatLayer<TypeParam> layer(layer_param);
   GradientChecker<TypeParam> checker(1e-2, 1e-3);
   checker.CheckGradient(&layer, &(this->blob_bottom_vec_0),
     &(this->blob_top_vec_));
-}
-
-TYPED_TEST(ConcatLayerTest, TestGPUGradient) {
-  LayerParameter layer_param;
-  Caffe::set_mode(Caffe::GPU);
-  ConcatLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3);
-  checker.CheckGradient(&layer, &(this->blob_bottom_vec_0),
-    &(this->blob_top_vec_));
-}
+)
 
 }  // namespace caffe

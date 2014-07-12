@@ -124,10 +124,9 @@ TYPED_TEST(LRNLayerTest, TestSetupAcrossChannels) {
   EXPECT_EQ(this->blob_top_->width(), 3);
 }
 
-TYPED_TEST(LRNLayerTest, TestCPUForwardAcrossChannels) {
+TYPED_TEST_ALL_DEVICES(LRNLayerTest, TestForwardAcrossChannels,
   LayerParameter layer_param;
   LRNLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::CPU);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   Blob<TypeParam> top_reference;
@@ -137,28 +136,12 @@ TYPED_TEST(LRNLayerTest, TestCPUForwardAcrossChannels) {
     EXPECT_NEAR(this->blob_top_->cpu_data()[i], top_reference.cpu_data()[i],
                 this->epsilon_);
   }
-}
+)
 
-TYPED_TEST(LRNLayerTest, TestGPUForwardAcrossChannels) {
-  LayerParameter layer_param;
-  LRNLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::GPU);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  Blob<TypeParam> top_reference;
-  this->ReferenceLRNForward(*(this->blob_bottom_), layer_param,
-      &top_reference);
-  for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-    EXPECT_NEAR(this->blob_top_->cpu_data()[i], top_reference.cpu_data()[i],
-                this->epsilon_);
-  }
-}
-
-TYPED_TEST(LRNLayerTest, TestCPUGradientAcrossChannels) {
+TYPED_TEST_ALL_DEVICES(LRNLayerTest, TestGradientAcrossChannels,
   LayerParameter layer_param;
   LRNLayer<TypeParam> layer(layer_param);
   GradientChecker<TypeParam> checker(1e-2, 1e-2);
-  Caffe::set_mode(Caffe::CPU);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   for (int i = 0; i < this->blob_top_->count(); ++i) {
@@ -173,28 +156,7 @@ TYPED_TEST(LRNLayerTest, TestCPUGradientAcrossChannels) {
   // }
   checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-}
-
-TYPED_TEST(LRNLayerTest, TestGPUGradientAcrossChannels) {
-  LayerParameter layer_param;
-  LRNLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2);
-  Caffe::set_mode(Caffe::GPU);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  for (int i = 0; i < this->blob_top_->count(); ++i) {
-    this->blob_top_->mutable_cpu_diff()[i] = 1.;
-  }
-  vector<bool> propagate_down(this->blob_bottom_vec_.size(), true);
-  layer.Backward(this->blob_top_vec_, propagate_down,
-                 &(this->blob_bottom_vec_));
-  // for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-  //   std::cout << "GPU diff " << this->blob_bottom_->cpu_diff()[i]
-  //       << std::endl;
-  // }
-  checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
-      &(this->blob_top_vec_));
-}
+)
 
 TYPED_TEST(LRNLayerTest, TestSetupWithinChannel) {
   LayerParameter layer_param;
@@ -209,13 +171,12 @@ TYPED_TEST(LRNLayerTest, TestSetupWithinChannel) {
   EXPECT_EQ(this->blob_top_->width(), 3);
 }
 
-TYPED_TEST(LRNLayerTest, TestCPUForwardWithinChannel) {
+TYPED_TEST_ALL_DEVICES(LRNLayerTest, TestForwardWithinChannel,
   LayerParameter layer_param;
   layer_param.mutable_lrn_param()->set_norm_region(
       LRNParameter_NormRegion_WITHIN_CHANNEL);
   layer_param.mutable_lrn_param()->set_local_size(3);
   LRNLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::CPU);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   Blob<TypeParam> top_reference;
@@ -225,34 +186,15 @@ TYPED_TEST(LRNLayerTest, TestCPUForwardWithinChannel) {
     EXPECT_NEAR(this->blob_top_->cpu_data()[i], top_reference.cpu_data()[i],
                 this->epsilon_);
   }
-}
+)
 
-TYPED_TEST(LRNLayerTest, TestGPUForwardWithinChannel) {
-  LayerParameter layer_param;
-  layer_param.mutable_lrn_param()->set_norm_region(
-      LRNParameter_NormRegion_WITHIN_CHANNEL);
-  layer_param.mutable_lrn_param()->set_local_size(3);
-  LRNLayer<TypeParam> layer(layer_param);
-  Caffe::set_mode(Caffe::GPU);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  Blob<TypeParam> top_reference;
-  this->ReferenceLRNForward(*(this->blob_bottom_), layer_param,
-      &top_reference);
-  for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-    EXPECT_NEAR(this->blob_top_->cpu_data()[i], top_reference.cpu_data()[i],
-                this->epsilon_);
-  }
-}
-
-TYPED_TEST(LRNLayerTest, TestCPUGradientWithinChannel) {
+TYPED_TEST_ALL_DEVICES(LRNLayerTest, TestGradientWithinChannel,
   LayerParameter layer_param;
   layer_param.mutable_lrn_param()->set_norm_region(
       LRNParameter_NormRegion_WITHIN_CHANNEL);
   layer_param.mutable_lrn_param()->set_local_size(3);
   LRNLayer<TypeParam> layer(layer_param);
   GradientChecker<TypeParam> checker(1e-2, 1e-2);
-  Caffe::set_mode(Caffe::CPU);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   for (int i = 0; i < this->blob_top_->count(); ++i) {
@@ -260,24 +202,7 @@ TYPED_TEST(LRNLayerTest, TestCPUGradientWithinChannel) {
   }
   checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-}
-
-TYPED_TEST(LRNLayerTest, TestGPUGradientWithinChannel) {
-  LayerParameter layer_param;
-  layer_param.mutable_lrn_param()->set_norm_region(
-      LRNParameter_NormRegion_WITHIN_CHANNEL);
-  layer_param.mutable_lrn_param()->set_local_size(3);
-  LRNLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2);
-  Caffe::set_mode(Caffe::GPU);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  for (int i = 0; i < this->blob_top_->count(); ++i) {
-    this->blob_top_->mutable_cpu_diff()[i] = 1.;
-  }
-  checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
-      &(this->blob_top_vec_));
-}
+)
 
 
 }  // namespace caffe

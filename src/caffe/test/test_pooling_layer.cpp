@@ -402,41 +402,11 @@ TYPED_TEST(PoolingLayerTest, TestSetupPadded) {
 }
 
 /*
-TYPED_TEST(PoolingLayerTest, PrintGPUBackward) {
-  LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-  pooling_param->set_kernel_size(3);
-  pooling_param->set_stride(2);
-  pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
-  Caffe::set_mode(Caffe::GPU);
-  PoolingLayer<TypeParam> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-
-  for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-    cout << "bottom data " << i << " " << this->blob_bottom_->cpu_data()[i] << endl;
-  }
-  for (int i = 0; i < this->blob_top_->count(); ++i) {
-    cout << "top data " << i << " " << this->blob_top_->cpu_data()[i] << endl;
-  }
-
-  for (int i = 0; i < this->blob_top_->count(); ++i) {
-    this->blob_top_->mutable_cpu_diff()[i] = 1.;
-  }
-  layer.Backward(this->blob_top_vec_, true, &(this->blob_bottom_vec_));
-  for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-    cout << "bottom diff " << i << " " << this->blob_bottom_->cpu_diff()[i] << endl;
-  }
-}
-*/
-
-/*
-TYPED_TEST(PoolingLayerTest, PrintCPUBackward) {
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, PrintBackward,
   LayerParameter layer_param;
   layer_param.set_kernelsize(3);
   layer_param.set_stride(2);
   layer_param.set_pool(LayerParameter_PoolMethod_MAX);
-  Caffe::set_mode(Caffe::CPU);
   PoolingLayer<TypeParam> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
@@ -454,40 +424,23 @@ TYPED_TEST(PoolingLayerTest, PrintCPUBackward) {
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     cout << "bottom diff " << i << " " << this->blob_bottom_->cpu_diff()[i] << endl;
   }
-}
+)
 */
 
-TYPED_TEST(PoolingLayerTest, TestCPUForwardMax) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestForwardMax,
   this->TestForwardSquare();
   this->TestForwardRectHigh();
   this->TestForwardRectWide();
-}
+)
 
-TYPED_TEST(PoolingLayerTest, TestGPUForwardMax) {
-  Caffe::set_mode(Caffe::GPU);
-  this->TestForwardSquare();
-  this->TestForwardRectHigh();
-  this->TestForwardRectWide();
-}
-
-TYPED_TEST(PoolingLayerTest, TestCPUForwardMaxTopMask) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestForwardMaxTopMask,
   this->blob_top_vec_.push_back(this->blob_top_mask_);
   this->TestForwardSquare();
   this->TestForwardRectHigh();
   this->TestForwardRectWide();
-}
+)
 
-TYPED_TEST(PoolingLayerTest, TestGPUForwardMaxTopMask) {
-  Caffe::set_mode(Caffe::GPU);
-  this->blob_top_vec_.push_back(this->blob_top_mask_);
-  this->TestForwardSquare();
-  this->TestForwardRectHigh();
-  this->TestForwardRectWide();
-}
-
-TYPED_TEST(PoolingLayerTest, TestCPUGradientMax) {
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestGradientMax,
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
@@ -497,42 +450,21 @@ TYPED_TEST(PoolingLayerTest, TestCPUGradientMax) {
       pooling_param->set_stride(2);
       pooling_param->set_pad(1);
       pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
-      Caffe::set_mode(Caffe::CPU);
       PoolingLayer<TypeParam> layer(layer_param);
       GradientChecker<TypeParam> checker(1e-4, 1e-2);
       checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
           &(this->blob_top_vec_));
     }
   }
-}
+)
 
-TYPED_TEST(PoolingLayerTest, TestGPUGradientMax) {
-  for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
-    for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
-      LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-      pooling_param->set_kernel_h(kernel_h);
-      pooling_param->set_kernel_w(kernel_w);
-      pooling_param->set_stride(2);
-      pooling_param->set_pad(1);
-      pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
-      Caffe::set_mode(Caffe::GPU);
-      PoolingLayer<TypeParam> layer(layer_param);
-      GradientChecker<TypeParam> checker(1e-4, 1e-2);
-      checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
-          &(this->blob_top_vec_));
-    }
-  }
-}
-
-TYPED_TEST(PoolingLayerTest, TestCPUForwardMaxPadded) {
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestForwardMaxPadded,
   LayerParameter layer_param;
   PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(2);
   pooling_param->set_pad(2);
   pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
-  Caffe::set_mode(Caffe::CPU);
   this->blob_bottom_->Reshape(1, 1, 3, 3);
   // Input:
   //     [ 1 2 4 ]
@@ -568,56 +500,9 @@ TYPED_TEST(PoolingLayerTest, TestCPUForwardMaxPadded) {
   EXPECT_NEAR(this->blob_top_->cpu_data()[6], 4, epsilon);
   EXPECT_NEAR(this->blob_top_->cpu_data()[7], 4, epsilon);
   EXPECT_NEAR(this->blob_top_->cpu_data()[8], 1, epsilon);
-}
+)
 
-
-TYPED_TEST(PoolingLayerTest, TestGPUForwardMaxPadded) {
-  LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-  pooling_param->set_kernel_size(3);
-  pooling_param->set_stride(2);
-  pooling_param->set_pad(2);
-  pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
-  Caffe::set_mode(Caffe::GPU);
-  this->blob_bottom_->Reshape(1, 1, 3, 3);
-  // Input:
-  //     [ 1 2 4 ]
-  //     [ 2 3 2 ]
-  //     [ 4 2 1 ]
-  this->blob_bottom_->mutable_cpu_data()[0] = 1;
-  this->blob_bottom_->mutable_cpu_data()[1] = 2;
-  this->blob_bottom_->mutable_cpu_data()[2] = 4;
-  this->blob_bottom_->mutable_cpu_data()[3] = 2;
-  this->blob_bottom_->mutable_cpu_data()[4] = 3;
-  this->blob_bottom_->mutable_cpu_data()[5] = 2;
-  this->blob_bottom_->mutable_cpu_data()[6] = 4;
-  this->blob_bottom_->mutable_cpu_data()[7] = 2;
-  this->blob_bottom_->mutable_cpu_data()[8] = 1;
-  PoolingLayer<TypeParam> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  EXPECT_EQ(this->blob_top_->num(), 1);
-  EXPECT_EQ(this->blob_top_->channels(), 1);
-  EXPECT_EQ(this->blob_top_->height(), 3);
-  EXPECT_EQ(this->blob_top_->width(), 3);
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  TypeParam epsilon = 1e-8;
-  // Output:
-  //     [ 1 4 4 ]
-  //     [ 4 4 4 ]
-  //     [ 4 4 1 ]
-  EXPECT_NEAR(this->blob_top_->cpu_data()[0], 1, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[1], 4, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[2], 4, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[3], 4, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[4], 4, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[5], 4, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[6], 4, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[7], 4, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[8], 1, epsilon);
-}
-
-
-TYPED_TEST(PoolingLayerTest, TestCPUGradientMaxTopMask) {
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestGradientMaxTopMask,
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
@@ -627,7 +512,6 @@ TYPED_TEST(PoolingLayerTest, TestCPUGradientMaxTopMask) {
       pooling_param->set_stride(2);
       pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
       this->blob_top_vec_.push_back(this->blob_top_mask_);
-      Caffe::set_mode(Caffe::CPU);
       PoolingLayer<TypeParam> layer(layer_param);
       GradientChecker<TypeParam> checker(1e-4, 1e-2);
       checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
@@ -635,37 +519,15 @@ TYPED_TEST(PoolingLayerTest, TestCPUGradientMaxTopMask) {
       this->blob_top_vec_.pop_back();
     }
   }
-}
+)
 
-TYPED_TEST(PoolingLayerTest, TestGPUGradientMaxTopMask) {
-  for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
-    for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
-      LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-      pooling_param->set_kernel_h(kernel_h);
-      pooling_param->set_kernel_w(kernel_w);
-      pooling_param->set_stride(2);
-      pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
-      this->blob_top_vec_.push_back(this->blob_top_mask_);
-      Caffe::set_mode(Caffe::GPU);
-      PoolingLayer<TypeParam> layer(layer_param);
-      GradientChecker<TypeParam> checker(1e-4, 1e-2);
-      checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
-          &(this->blob_top_vec_));
-      this->blob_top_vec_.pop_back();
-    }
-  }
-}
-
-
-TYPED_TEST(PoolingLayerTest, TestCPUForwardAve) {
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestForwardAve,
   LayerParameter layer_param;
   PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(1);
   pooling_param->set_pad(1);
   pooling_param->set_pool(PoolingParameter_PoolMethod_AVE);
-  Caffe::set_mode(Caffe::CPU);
   this->blob_bottom_->Reshape(1, 1, 3, 3);
   FillerParameter filler_param;
   filler_param.set_value(TypeParam(2));
@@ -688,43 +550,9 @@ TYPED_TEST(PoolingLayerTest, TestCPUForwardAve) {
   EXPECT_NEAR(this->blob_top_->cpu_data()[6], 8.0 / 9, epsilon);
   EXPECT_NEAR(this->blob_top_->cpu_data()[7], 4.0 / 3, epsilon);
   EXPECT_NEAR(this->blob_top_->cpu_data()[8], 8.0 / 9, epsilon);
-}
+)
 
-
-TYPED_TEST(PoolingLayerTest, TestGPUForwardAve) {
-  LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-  pooling_param->set_kernel_size(3);
-  pooling_param->set_stride(1);
-  pooling_param->set_pad(1);
-  pooling_param->set_pool(PoolingParameter_PoolMethod_AVE);
-  Caffe::set_mode(Caffe::GPU);
-  this->blob_bottom_->Reshape(1, 1, 3, 3);
-  FillerParameter filler_param;
-  filler_param.set_value(TypeParam(2));
-  ConstantFiller<TypeParam> filler(filler_param);
-  filler.Fill(this->blob_bottom_);
-  PoolingLayer<TypeParam> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  EXPECT_EQ(this->blob_top_->num(), 1);
-  EXPECT_EQ(this->blob_top_->channels(), 1);
-  EXPECT_EQ(this->blob_top_->height(), 3);
-  EXPECT_EQ(this->blob_top_->width(), 3);
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  TypeParam epsilon = 1e-5;
-  EXPECT_NEAR(this->blob_top_->cpu_data()[0], 8.0 / 9, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[1], 4.0 / 3, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[2], 8.0 / 9, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[3], 4.0 / 3, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[4], 2.0    , epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[5], 4.0 / 3, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[6], 8.0 / 9, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[7], 4.0 / 3, epsilon);
-  EXPECT_NEAR(this->blob_top_->cpu_data()[8], 8.0 / 9, epsilon);
-}
-
-
-TYPED_TEST(PoolingLayerTest, TestCPUGradientAve) {
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestGradientAve,
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
@@ -733,36 +561,15 @@ TYPED_TEST(PoolingLayerTest, TestCPUGradientAve) {
       pooling_param->set_kernel_w(kernel_w);
       pooling_param->set_stride(2);
       pooling_param->set_pool(PoolingParameter_PoolMethod_AVE);
-      Caffe::set_mode(Caffe::CPU);
       PoolingLayer<TypeParam> layer(layer_param);
       GradientChecker<TypeParam> checker(1e-2, 1e-2);
       checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
           &(this->blob_top_vec_));
     }
   }
-}
+)
 
-
-TYPED_TEST(PoolingLayerTest, TestGPUGradientAve) {
-  for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
-    for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
-      LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-      pooling_param->set_kernel_h(kernel_h);
-      pooling_param->set_kernel_w(kernel_w);
-      pooling_param->set_stride(2);
-      pooling_param->set_pool(PoolingParameter_PoolMethod_AVE);
-      Caffe::set_mode(Caffe::GPU);
-      PoolingLayer<TypeParam> layer(layer_param);
-      GradientChecker<TypeParam> checker(1e-2, 1e-2);
-      checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
-          &(this->blob_top_vec_));
-    }
-  }
-}
-
-
-TYPED_TEST(PoolingLayerTest, TestCPUGradientAvePadded) {
+TYPED_TEST_ALL_DEVICES(PoolingLayerTest, TestGradientAvePadded,
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
@@ -772,34 +579,13 @@ TYPED_TEST(PoolingLayerTest, TestCPUGradientAvePadded) {
       pooling_param->set_stride(2);
       pooling_param->set_pad(2);
       pooling_param->set_pool(PoolingParameter_PoolMethod_AVE);
-      Caffe::set_mode(Caffe::CPU);
       PoolingLayer<TypeParam> layer(layer_param);
       GradientChecker<TypeParam> checker(1e-2, 1e-2);
       checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
           &(this->blob_top_vec_));
     }
   }
-}
-
-
-TYPED_TEST(PoolingLayerTest, TestGPUGradientAvePadded) {
-  for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
-    for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
-      LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
-      pooling_param->set_kernel_h(kernel_h);
-      pooling_param->set_kernel_w(kernel_w);
-      pooling_param->set_stride(2);
-      pooling_param->set_pad(2);
-      pooling_param->set_pool(PoolingParameter_PoolMethod_AVE);
-      Caffe::set_mode(Caffe::GPU);
-      PoolingLayer<TypeParam> layer(layer_param);
-      GradientChecker<TypeParam> checker(1e-2, 1e-2);
-      checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
-          &(this->blob_top_vec_));
-    }
-  }
-}
+)
 
 
 }  // namespace caffe

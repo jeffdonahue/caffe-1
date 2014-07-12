@@ -312,176 +312,80 @@ class DataLayerTest : public ::testing::Test {
 typedef ::testing::Types<float, double> Dtypes;
 TYPED_TEST_CASE(DataLayerTest, Dtypes);
 
-TYPED_TEST(DataLayerTest, TestReadLevelDBCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadLevelDB,
   const bool unique_pixels = false;  // all pixels the same; images different
   this->FillLevelDB(unique_pixels);
   this->TestRead();
-}
+)
 
-TYPED_TEST(DataLayerTest, TestReadLevelDBGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = false;  // all pixels the same; images different
-  this->FillLevelDB(unique_pixels);
-  this->TestRead();
-}
-
-TYPED_TEST(DataLayerTest, TestReadCropTrainLevelDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTrainLevelDB,
   Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLevelDB(unique_pixels);
   this->TestReadCrop();
-}
-
-TYPED_TEST(DataLayerTest, TestReadCropTrainLevelDBGPU) {
-  Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLevelDB(unique_pixels);
-  this->TestReadCrop();
-}
+)
 
 // Test that the sequence of random crops is consistent when using
 // Caffe::set_random_seed.
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceSeededLevelDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTrainSequenceSeededLevelDB,
   Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLevelDB(unique_pixels);
   this->TestReadCropTrainSequenceSeeded();
-}
-
-// Test that the sequence of random crops is consistent when using
-// Caffe::set_random_seed.
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceSeededLevelDBGPU) {
-  Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLevelDB(unique_pixels);
-  this->TestReadCropTrainSequenceSeeded();
-}
+)
 
 // Test that the sequence of random crops differs across iterations when
 // Caffe::set_random_seed isn't called (and seeds from srand are ignored).
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceUnseededLevelDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTrainSequenceUnseededLevelDB,
   Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLevelDB(unique_pixels);
   this->TestReadCropTrainSequenceUnseeded();
-}
+)
 
-// Test that the sequence of random crops differs across iterations when
-// Caffe::set_random_seed isn't called (and seeds from srand are ignored).
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceUnseededLevelDBGPU) {
-  Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLevelDB(unique_pixels);
-  this->TestReadCropTrainSequenceUnseeded();
-}
-
-TYPED_TEST(DataLayerTest, TestReadCropTestLevelDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTestLevelDB,
   Caffe::set_phase(Caffe::TEST);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLevelDB(unique_pixels);
   this->TestReadCrop();
-}
+)
 
-TYPED_TEST(DataLayerTest, TestReadCropTestLevelDBGPU) {
-  Caffe::set_phase(Caffe::TEST);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLevelDB(unique_pixels);
-  this->TestReadCrop();
-}
-
-TYPED_TEST(DataLayerTest, TestReadLMDBCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadLMDB,
   const bool unique_pixels = false;  // all pixels the same; images different
   this->FillLMDB(unique_pixels);
   this->TestRead();
-}
+)
 
-TYPED_TEST(DataLayerTest, TestReadLMDBGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = false;  // all pixels the same; images different
-  this->FillLMDB(unique_pixels);
-  this->TestRead();
-}
-
-TYPED_TEST(DataLayerTest, TestReadCropTrainLMDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTrainLMDB,
   Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLMDB(unique_pixels);
   this->TestReadCrop();
-}
-
-TYPED_TEST(DataLayerTest, TestReadCropTrainLMDBGPU) {
-  Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLMDB(unique_pixels);
-  this->TestReadCrop();
-}
+)
 
 // Test that the sequence of random crops is consistent when using
 // Caffe::set_random_seed.
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceSeededLMDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTrainSequenceSeededLMDB,
   Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLMDB(unique_pixels);
   this->TestReadCropTrainSequenceSeeded();
-}
-
-// Test that the sequence of random crops is consistent when using
-// Caffe::set_random_seed.
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceSeededLMDBGPU) {
-  Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLMDB(unique_pixels);
-  this->TestReadCropTrainSequenceSeeded();
-}
+)
 
 // Test that the sequence of random crops differs across iterations when
 // Caffe::set_random_seed isn't called (and seeds from srand are ignored).
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceUnseededLMDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTrainSequenceUnseededLMDB,
   Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLMDB(unique_pixels);
   this->TestReadCropTrainSequenceUnseeded();
-}
+)
 
-// Test that the sequence of random crops differs across iterations when
-// Caffe::set_random_seed isn't called (and seeds from srand are ignored).
-TYPED_TEST(DataLayerTest, TestReadCropTrainSequenceUnseededLMDBGPU) {
-  Caffe::set_phase(Caffe::TRAIN);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLMDB(unique_pixels);
-  this->TestReadCropTrainSequenceUnseeded();
-}
-
-TYPED_TEST(DataLayerTest, TestReadCropTestLMDBCPU) {
+TYPED_TEST_ALL_DEVICES(DataLayerTest, TestReadCropTestLMDB,
   Caffe::set_phase(Caffe::TEST);
-  Caffe::set_mode(Caffe::CPU);
   const bool unique_pixels = true;  // all images the same; pixels different
   this->FillLMDB(unique_pixels);
   this->TestReadCrop();
-}
-
-TYPED_TEST(DataLayerTest, TestReadCropTestLMDBGPU) {
-  Caffe::set_phase(Caffe::TEST);
-  Caffe::set_mode(Caffe::GPU);
-  const bool unique_pixels = true;  // all images the same; pixels different
-  this->FillLMDB(unique_pixels);
-  this->TestReadCrop();
-}
+)
 
 }  // namespace caffe

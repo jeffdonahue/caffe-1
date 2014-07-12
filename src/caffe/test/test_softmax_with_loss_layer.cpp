@@ -50,24 +50,13 @@ typedef ::testing::Types<float, double> Dtypes;
 TYPED_TEST_CASE(SoftmaxWithLossLayerTest, Dtypes);
 
 
-TYPED_TEST(SoftmaxWithLossLayerTest, TestGradientCPU) {
+TYPED_TEST_ALL_DEVICES(SoftmaxWithLossLayerTest, TestGradient,
   LayerParameter layer_param;
-  Caffe::set_mode(Caffe::CPU);
   SoftmaxWithLossLayer<TypeParam> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
   GradientChecker<TypeParam> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_), 0, -1, -1);
-}
-
-TYPED_TEST(SoftmaxWithLossLayerTest, TestGradientGPU) {
-  LayerParameter layer_param;
-  Caffe::set_mode(Caffe::GPU);
-  SoftmaxWithLossLayer<TypeParam> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2, 1701);
-  checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
-      &(this->blob_top_vec_), 0, -1, -1);
-}
+)
 
 }  // namespace caffe

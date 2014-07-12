@@ -73,11 +73,7 @@ void HDF5OutputLayerTest<Dtype>::CheckBlobEqual(const Blob<Dtype>& b1,
 typedef ::testing::Types<float, double> Dtypes;
 TYPED_TEST_CASE(HDF5OutputLayerTest, Dtypes);
 
-/*
- * TestCPUForward and TestGPUForward are almost identical except for the mode.
- * They are separated to use with `test_all.testbin --gtest_filter="*CPU*"`.
- */
-TYPED_TEST(HDF5OutputLayerTest, TestCPUForward) {
+TYPED_TEST_ALL_DEVICES(HDF5OutputLayerTest, TestForward,
   LOG(INFO) << "Loading HDF5 file " << this->input_file_name_;
   hid_t file_id = H5Fopen(this->input_file_name_.c_str(), H5F_ACC_RDONLY,
                           H5P_DEFAULT);
@@ -93,7 +89,6 @@ TYPED_TEST(HDF5OutputLayerTest, TestCPUForward) {
   this->blob_bottom_vec_.push_back(this->blob_data_);
   this->blob_bottom_vec_.push_back(this->blob_label_);
 
-  Caffe::set_mode(Caffe::CPU);
   LayerParameter param;
   param.mutable_hdf5_output_param()->set_file_name(this->output_file_name_);
   // This code block ensures that the layer is deconstructed and
@@ -123,55 +118,6 @@ TYPED_TEST(HDF5OutputLayerTest, TestCPUForward) {
   status = H5Fclose(file_id);
   EXPECT_GE(status, 0) << "Failed to close HDF5 file " <<
       this->output_file_name_;
-}
-
-TYPED_TEST(HDF5OutputLayerTest, TestGPUForward) {
-  LOG(INFO) << "Loading HDF5 file " << this->input_file_name_;
-
-  hid_t file_id = H5Fopen(this->input_file_name_.c_str(), H5F_ACC_RDONLY,
-                          H5P_DEFAULT);
-  ASSERT_GE(file_id, 0) << "Failed to open HDF5 file" <<
-      this->input_file_name_;
-  hdf5_load_nd_dataset(file_id, HDF5_DATA_DATASET_NAME, 0, 4,
-                       this->blob_data_);
-  hdf5_load_nd_dataset(file_id, HDF5_DATA_LABEL_NAME, 0, 4,
-                       this->blob_label_);
-  herr_t status = H5Fclose(file_id);
-  EXPECT_GE(status, 0) << "Failed to close HDF5 file " <<
-      this->input_file_name_;
-  this->blob_bottom_vec_.push_back(this->blob_data_);
-  this->blob_bottom_vec_.push_back(this->blob_label_);
-
-  Caffe::set_mode(Caffe::GPU);
-  LayerParameter param;
-  param.mutable_hdf5_output_param()->set_file_name(this->output_file_name_);
-  // This code block ensures that the layer is deconstructed and
-  //   the output hdf5 file is closed.
-  {
-    HDF5OutputLayer<TypeParam> layer(param);
-    EXPECT_EQ(layer.file_name(), this->output_file_name_);
-    layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
-    layer.Forward(this->blob_bottom_vec_, &this->blob_top_vec_);
-  }
-  file_id = H5Fopen(this->output_file_name_.c_str(), H5F_ACC_RDONLY,
-                          H5P_DEFAULT);
-  ASSERT_GE(
-    file_id, 0)<< "Failed to open HDF5 file" <<
-          this->input_file_name_;
-
-  Blob<TypeParam>* blob_data = new Blob<TypeParam>();
-  hdf5_load_nd_dataset(file_id, HDF5_DATA_DATASET_NAME, 0, 4,
-                       blob_data);
-  this->CheckBlobEqual(*(this->blob_data_), *blob_data);
-
-  Blob<TypeParam>* blob_label = new Blob<TypeParam>();
-  hdf5_load_nd_dataset(file_id, HDF5_DATA_LABEL_NAME, 0, 4,
-                       blob_label);
-  this->CheckBlobEqual(*(this->blob_label_), *blob_label);
-
-  status = H5Fclose(file_id);
-  EXPECT_GE(status, 0) << "Failed to close HDF5 file " <<
-      this->output_file_name_;
-}
+)
 
 }  // namespace caffe

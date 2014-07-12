@@ -42,9 +42,8 @@ class TanHLayerTest : public ::testing::Test {
 typedef ::testing::Types<float, double> Dtypes;
 TYPED_TEST_CASE(TanHLayerTest, Dtypes);
 
-TYPED_TEST(TanHLayerTest, TestForwardCPU) {
+TYPED_TEST_ALL_DEVICES(TanHLayerTest, TestForwardGPU,
   LayerParameter layer_param;
-  Caffe::set_mode(Caffe::CPU);
   TanHLayer<TypeParam> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
@@ -63,47 +62,14 @@ TYPED_TEST(TanHLayerTest, TestForwardCPU) {
       }
     }
   }
-}
+)
 
-TYPED_TEST(TanHLayerTest, TestGradientCPU) {
+TYPED_TEST_ALL_DEVICES(TanHLayerTest, TestGradient,
   LayerParameter layer_param;
-  Caffe::set_mode(Caffe::CPU);
   TanHLayer<TypeParam> layer(layer_param);
   GradientChecker<TypeParam> checker(1e-2, 1e-3);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-}
-
-TYPED_TEST(TanHLayerTest, TestForwardGPU) {
-  LayerParameter layer_param;
-  Caffe::set_mode(Caffe::GPU);
-  TanHLayer<TypeParam> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
-  // Test exact values
-  for (int i = 0; i < this->blob_bottom_->num(); ++i) {
-    for (int j = 0; j < this->blob_bottom_->channels(); ++j) {
-      for (int k = 0; k < this->blob_bottom_->height(); ++k) {
-        for (int l = 0; l < this->blob_bottom_->width(); ++l) {
-          EXPECT_GE(this->blob_top_->data_at(i, j, k, l) + 1e-4,
-             (exp(2*this->blob_bottom_->data_at(i, j, k, l)) - 1) /
-             (exp(2*this->blob_bottom_->data_at(i, j, k, l)) + 1));
-          EXPECT_LE(this->blob_top_->data_at(i, j, k, l) - 1e-4,
-             (exp(2*this->blob_bottom_->data_at(i, j, k, l)) - 1) /
-             (exp(2*this->blob_bottom_->data_at(i, j, k, l)) + 1));
-        }
-      }
-    }
-  }
-}
-
-TYPED_TEST(TanHLayerTest, TestGradientGPU) {
-  LayerParameter layer_param;
-  Caffe::set_mode(Caffe::GPU);
-  TanHLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3);
-  checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
-      &(this->blob_top_vec_));
-}
+)
 
 }  // namespace caffe
