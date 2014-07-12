@@ -17,10 +17,15 @@ install:
 
 before_script:
   - mv Makefile.config.example Makefile.config
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/lib
+  - export NUM_THREADS=4
 script:
-  - make all
-  - make test
-  # - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64 make runtest
+  - make -j $NUM_THREADS all test warn lint
+  - make runtestnogpu
+  - make -j $NUM_THREADS all
+  - make -j $NUM_THREADS test
+  - make -j $NUM_THREADS warn
+  - make -j $NUM_THREADS lint
 branches:
   only:
     - master
