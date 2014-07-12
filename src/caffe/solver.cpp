@@ -109,6 +109,17 @@ void Solver<Dtype>::Solve(const char* resume_file) {
 
     if (param_.display() && iter_ % param_.display() == 0) {
       LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;
+      const vector<Blob<Dtype>*>& result = net_->output_blobs();
+      vector<Dtype> score;
+      for (int j = 0; j < result.size(); ++j) {
+        const Dtype* result_vec = result[j]->cpu_data();
+        for (int k = 0; k < result[j]->count(); ++k) {
+          score.push_back(result_vec[k]);
+        }
+      }
+      for (int i = 0; i < score.size(); ++i) {
+        LOG(INFO) << "    Training score #" << i << ": " << score[i];
+      }
     }
     if (param_.test_interval() && iter_ % param_.test_interval() == 0) {
       TestAll();
@@ -173,7 +184,7 @@ void Solver<Dtype>::Test(const int test_net_id) {
     LOG(INFO) << "Test loss: " << loss;
   }
   for (int i = 0; i < test_score.size(); ++i) {
-    LOG(INFO) << "Test score #" << i << ": "
+    LOG(INFO) << "    Test score #" << i << ": "
         << test_score[i] / param_.test_iter(test_net_id);
   }
   Caffe::set_phase(Caffe::TRAIN);
