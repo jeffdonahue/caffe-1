@@ -616,8 +616,7 @@ TYPED_TEST(NetTest, TestBottomNeedBackwardTricky) {
   EXPECT_EQ(true, bottom_need_backward[3][1]);
 }
 
-TYPED_TEST(NetTest, TestLossWeightCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST(NetTest, TestLossWeight) {
   // First, compute the loss and gradients with no top_loss_weight specified.
   // In this case, the loss weight for the EUCLIDEAN_LOSS layer should default
   // to 1.
@@ -667,56 +666,7 @@ TYPED_TEST(NetTest, TestLossWeightCPU) {
   }
 }
 
-TYPED_TEST(NetTest, TestLossWeightGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  vector<Blob<TypeParam>*> bottom;
-  Caffe::set_random_seed(this->seed_);
-  const bool kForceBackward = true;
-  this->InitUnsharedWeightsNet(NULL, NULL, kForceBackward);
-  const TypeParam loss = this->net_->ForwardBackward(bottom);
-  const bool kCopyDiff = true;
-  vector<shared_ptr<Blob<TypeParam> > > blob_grads;
-  this->CopyNetBlobs(kCopyDiff, &blob_grads);
-  vector<shared_ptr<Blob<TypeParam> > > param_grads;
-  this->CopyNetParams(kCopyDiff, &param_grads);
-  // Check that the loss is non-trivial, otherwise the test doesn't prove much.
-  const TypeParam kMinLossAbsValue = 1e-2;
-  ASSERT_GE(fabs(loss), kMinLossAbsValue);
-  const TypeParam kErrorMargin = 1e-5;
-  const int kNumLossWeights = 6;
-  TypeParam kLossWeights[kNumLossWeights] = {2, 0, 1, -1, -2.5, 3.7};
-  for (int i = 0; i < kNumLossWeights; ++i) {
-    Caffe::set_random_seed(this->seed_);
-    this->InitUnsharedWeightsNet(&kLossWeights[i], NULL, kForceBackward);
-    const TypeParam weighted_loss = this->net_->ForwardBackward(bottom);
-    const TypeParam error_margin = kErrorMargin * fabs(kLossWeights[i]);
-    EXPECT_NEAR(loss * kLossWeights[i], weighted_loss, error_margin)
-        << "loss weight = " << kLossWeights[i];
-    const vector<shared_ptr<Blob<TypeParam> > >& weighted_blobs =
-        this->net_->blobs();
-    ASSERT_EQ(blob_grads.size(), weighted_blobs.size());
-    for (int j = 0; j < blob_grads.size(); ++j) {
-      ASSERT_EQ(blob_grads[j]->count(), weighted_blobs[j]->count());
-      for (int k = 0; k < blob_grads[j]->count(); ++k) {
-        EXPECT_NEAR(blob_grads[j]->cpu_diff()[k] * kLossWeights[i],
-                    weighted_blobs[j]->cpu_diff()[k], error_margin);
-      }
-    }
-    const vector<shared_ptr<Blob<TypeParam> > >& weighted_params =
-        this->net_->params();
-    ASSERT_EQ(param_grads.size(), weighted_params.size());
-    for (int j = 0; j < param_grads.size(); ++j) {
-      ASSERT_EQ(param_grads[j]->count(), weighted_params[j]->count());
-      for (int k = 0; k < param_grads[j]->count(); ++k) {
-        EXPECT_NEAR(param_grads[j]->cpu_diff()[k] * kLossWeights[i],
-                    weighted_params[j]->cpu_diff()[k], error_margin);
-      }
-    }
-  }
-}
-
-TYPED_TEST(NetTest, TestLossWeightMidNetCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST(NetTest, TestLossWeightMidNet) {
   vector<Blob<TypeParam>*> bottom;
   Caffe::set_random_seed(this->seed_);
   const bool kForceBackward = true;
@@ -753,49 +703,7 @@ TYPED_TEST(NetTest, TestLossWeightMidNetCPU) {
   }
 }
 
-TYPED_TEST(NetTest, TestLossWeightMidNetGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  // First, compute the loss and gradients with no top_loss_weight specified.
-  // In this case, the loss weight for the EUCLIDEAN_LOSS layer should default
-  // to 1.
-  vector<Blob<TypeParam>*> bottom;
-  Caffe::set_random_seed(this->seed_);
-  const bool kForceBackward = true;
-  TypeParam loss_weight = 0;
-  TypeParam midnet_loss_weight = 1;
-  this->InitUnsharedWeightsNet(&loss_weight, &midnet_loss_weight,
-                               kForceBackward);
-  const TypeParam loss = this->net_->ForwardBackward(bottom);
-  const bool kCopyDiff = true;
-  const bool kReshape = true;
-  Blob<TypeParam> data_grad;
-  data_grad.CopyFrom(*this->net_->blob_by_name("data"), kCopyDiff, kReshape);
-  // Check that the loss is non-trivial, otherwise the test doesn't prove much.
-  const TypeParam kMinLossAbsValue = 1e-2;
-  ASSERT_GE(fabs(loss), kMinLossAbsValue);
-  const TypeParam kErrorMargin = 1e-5;
-  const int kNumLossWeights = 6;
-  TypeParam kLossWeights[kNumLossWeights] = {2, 0, 1, -1, -2.5, 3.7};
-  for (int i = 0; i < kNumLossWeights; ++i) {
-    Caffe::set_random_seed(this->seed_);
-    this->InitUnsharedWeightsNet(&loss_weight, &kLossWeights[i],
-                                 kForceBackward);
-    const TypeParam weighted_loss = this->net_->ForwardBackward(bottom);
-    const TypeParam error_margin = kErrorMargin * fabs(kLossWeights[i]);
-    EXPECT_NEAR(loss * kLossWeights[i], weighted_loss, error_margin)
-        << "loss weight = " << kLossWeights[i];
-    const shared_ptr<Blob<TypeParam> >& weighted_blob =
-        this->net_->blob_by_name("data");
-    ASSERT_EQ(data_grad.count(), weighted_blob->count());
-    for (int j = 0; j < data_grad.count(); ++j) {
-      EXPECT_NEAR(data_grad.cpu_diff()[j] * kLossWeights[i],
-                  weighted_blob->cpu_diff()[j], error_margin);
-    }
-  }
-}
-
-TYPED_TEST(NetTest, TestComboLossWeightCPU) {
-  Caffe::set_mode(Caffe::CPU);
+TYPED_TEST(NetTest, TestComboLossWeight) {
   vector<Blob<TypeParam>*> bottom;
   TypeParam loss_weight;
   TypeParam midnet_loss_weight;
@@ -838,52 +746,17 @@ TYPED_TEST(NetTest, TestComboLossWeightCPU) {
   ASSERT_EQ(blob_grads.size(), blob_grads_loss_3.size());
   ASSERT_EQ(blob_grads_loss_2.size(), blob_grads_loss_3.size());
   for (int j = 0; j < blob_grads.size(); ++j) {
+    const string& blob_name = this->net_->blob_names()[j];
+    bool grad_should_change = true;
+    if (blob_name == "innerproduct1_innerproduct1_0_split_0") {
+      grad_should_change = false;
+    }
     ASSERT_EQ(blob_grads[j]->count(), blob_grads_loss_3[j]->count());
     ASSERT_EQ(blob_grads_loss_2[j]->count(), blob_grads_loss_3[j]->count());
     for (int k = 0; k < blob_grads[j]->count(); ++k) {
       const TypeParam grad_diff_2 = blob_grads_loss_2[j]->cpu_diff()[k] -
                                     blob_grads[j]->cpu_diff()[k];
-      // Test non-triviality.
-      const TypeParam kMinGradDiffAbsValue = 1e-4;
-      EXPECT_GT(fabs(grad_diff_2), kMinGradDiffAbsValue);
       const TypeParam grad_diff_3 = blob_grads_loss_3[j]->cpu_diff()[k] -
-                                    blob_grads[j]->cpu_diff()[k];
-      EXPECT_NEAR(2 * grad_diff_2, grad_diff_3, kErrorMargin);
-    }
-  }
-
-  loss_weight = 1;
-  midnet_loss_weight = 2;
-  Caffe::set_random_seed(this->seed_);
-  this->InitUnsharedWeightsNet(&loss_weight, &midnet_loss_weight,
-                               kForceBackward);
-  const TypeParam loss_midnet_2 = this->net_->ForwardBackward(bottom);
-  this->CopyNetBlobs(kCopyDiff, &blob_grads_loss_2);
-  this->CopyNetParams(kCopyDiff, &param_grads_loss_2);
-
-  loss_weight = 1;
-  midnet_loss_weight = 3;
-  Caffe::set_random_seed(this->seed_);
-  this->InitUnsharedWeightsNet(&loss_weight, &midnet_loss_weight,
-                               kForceBackward);
-  const TypeParam loss_midnet_3 = this->net_->ForwardBackward(bottom);
-  const vector<shared_ptr<Blob<TypeParam> > >& blob_grads_midnet_loss_3 =
-      this->net_->blobs();
-  ASSERT_EQ(blob_grads.size(), blob_grads_midnet_loss_3.size());
-  ASSERT_EQ(blob_grads_loss_2.size(), blob_grads_midnet_loss_3.size());
-  const vector<string>& blob_names = this->net_->blob_names();
-  for (int j = 0; j < blob_grads.size(); ++j) {
-    const string& blob_name = blob_names[j];
-    bool grad_should_change = false;
-    if (blob_name == "innerproduct1" || blob_name == "data") {
-      grad_should_change = true;
-    }
-    ASSERT_EQ(blob_grads[j]->count(), blob_grads_midnet_loss_3[j]->count());
-    ASSERT_EQ(blob_grads[j]->count(), blob_grads_loss_2[j]->count());
-    for (int k = 0; k < blob_grads[j]->count(); ++k) {
-      const TypeParam grad_diff_2 = blob_grads_loss_2[j]->cpu_diff()[k] -
-                                    blob_grads[j]->cpu_diff()[k];
-      const TypeParam grad_diff_3 = blob_grads_midnet_loss_3[j]->cpu_diff()[k] -
                                     blob_grads[j]->cpu_diff()[k];
       if (grad_should_change) {
         // Test non-triviality.
@@ -891,85 +764,12 @@ TYPED_TEST(NetTest, TestComboLossWeightCPU) {
         EXPECT_GT(fabs(grad_diff_2), kMinGradDiffAbsValue) << blob_name;
         EXPECT_NEAR(2 * grad_diff_2, grad_diff_3, kErrorMargin) << blob_name;
       } else {
-        EXPECT_EQ(0, grad_diff_2);
-        EXPECT_EQ(0, grad_diff_3);
+        EXPECT_EQ(0, grad_diff_2) << blob_name;
+        EXPECT_EQ(0, grad_diff_3) << blob_name;
       }
     }
   }
 
-  const TypeParam kMinLossDiffAbsValue = 1e-4;
-
-  TypeParam loss_diff_2 = loss_main_2 - loss;
-  // Test non-triviality.
-  EXPECT_GT(fabs(loss_diff_2), kMinLossDiffAbsValue);
-  TypeParam loss_diff_3 = loss_main_3 - loss;
-  EXPECT_NEAR(2 * loss_diff_2, loss_diff_3, kErrorMargin);
-
-  loss_diff_2 = loss_midnet_2 - loss;
-  // Test non-triviality.
-  EXPECT_GT(fabs(loss_diff_2), kMinLossDiffAbsValue);
-  loss_diff_3 = loss_midnet_3 - loss;
-  EXPECT_NEAR(2 * loss_diff_2, loss_diff_3, kErrorMargin);
-}
-
-TYPED_TEST(NetTest, TestComboLossWeightGPU) {
-  Caffe::set_mode(Caffe::GPU);
-  vector<Blob<TypeParam>*> bottom;
-  TypeParam loss_weight;
-  TypeParam midnet_loss_weight;
-  const bool kForceBackward = true;
-  const TypeParam kErrorMargin = 1e-4;
-
-  // Get the loss and gradients with EUCLIDEAN_LOSS weight 1,
-  // INNER_PRODUCT weight 1.
-  loss_weight = 1;
-  midnet_loss_weight = 1;
-  Caffe::set_random_seed(this->seed_);
-  this->InitUnsharedWeightsNet(&loss_weight, &midnet_loss_weight,
-                               kForceBackward);
-  const TypeParam loss = this->net_->ForwardBackward(bottom);
-  const bool kCopyDiff = true;
-  vector<shared_ptr<Blob<TypeParam> > > blob_grads;
-  this->CopyNetBlobs(kCopyDiff, &blob_grads);
-  vector<shared_ptr<Blob<TypeParam> > > param_grads;
-  this->CopyNetParams(kCopyDiff, &param_grads);
-
-  loss_weight = 2;
-  midnet_loss_weight = 1;
-  Caffe::set_random_seed(this->seed_);
-  this->InitUnsharedWeightsNet(&loss_weight, &midnet_loss_weight,
-                               kForceBackward);
-  const TypeParam loss_main_2 = this->net_->ForwardBackward(bottom);
-  vector<shared_ptr<Blob<TypeParam> > > blob_grads_loss_2;
-  this->CopyNetBlobs(kCopyDiff, &blob_grads_loss_2);
-  vector<shared_ptr<Blob<TypeParam> > > param_grads_loss_2;
-  this->CopyNetParams(kCopyDiff, &param_grads_loss_2);
-
-  loss_weight = 3;
-  midnet_loss_weight = 1;
-  Caffe::set_random_seed(this->seed_);
-  this->InitUnsharedWeightsNet(&loss_weight, &midnet_loss_weight,
-                               kForceBackward);
-  const TypeParam loss_main_3 = this->net_->ForwardBackward(bottom);
-  const vector<shared_ptr<Blob<TypeParam> > >& blob_grads_loss_3 =
-      this->net_->blobs();
-  ASSERT_EQ(blob_grads.size(), blob_grads_loss_3.size());
-  ASSERT_EQ(blob_grads_loss_2.size(), blob_grads_loss_3.size());
-  for (int j = 0; j < blob_grads.size(); ++j) {
-    ASSERT_EQ(blob_grads[j]->count(), blob_grads_loss_3[j]->count());
-    ASSERT_EQ(blob_grads_loss_2[j]->count(), blob_grads_loss_3[j]->count());
-    for (int k = 0; k < blob_grads[j]->count(); ++k) {
-      const TypeParam grad_diff_2 = blob_grads_loss_2[j]->cpu_diff()[k] -
-                                    blob_grads[j]->cpu_diff()[k];
-      // Test non-triviality.
-      const TypeParam kMinGradDiffAbsValue = 1e-4;
-      EXPECT_GT(fabs(grad_diff_2), kMinGradDiffAbsValue);
-      const TypeParam grad_diff_3 = blob_grads_loss_3[j]->cpu_diff()[k] -
-                                    blob_grads[j]->cpu_diff()[k];
-      EXPECT_NEAR(2 * grad_diff_2, grad_diff_3, kErrorMargin);
-    }
-  }
-
   loss_weight = 1;
   midnet_loss_weight = 2;
   Caffe::set_random_seed(this->seed_);
@@ -993,7 +793,9 @@ TYPED_TEST(NetTest, TestComboLossWeightGPU) {
   for (int j = 0; j < blob_grads.size(); ++j) {
     const string& blob_name = blob_names[j];
     bool grad_should_change = false;
-    if (blob_name == "innerproduct1" || blob_name == "data") {
+    if (blob_name == "innerproduct1" ||
+        blob_name == "innerproduct1_innerproduct1_0_split_0" ||
+        blob_name == "data_data_0_split_0" || blob_name == "data") {
       grad_should_change = true;
     }
     ASSERT_EQ(blob_grads[j]->count(), blob_grads_midnet_loss_3[j]->count());
@@ -1009,8 +811,8 @@ TYPED_TEST(NetTest, TestComboLossWeightGPU) {
         EXPECT_GT(fabs(grad_diff_2), kMinGradDiffAbsValue) << blob_name;
         EXPECT_NEAR(2 * grad_diff_2, grad_diff_3, kErrorMargin) << blob_name;
       } else {
-        EXPECT_EQ(0, grad_diff_2);
-        EXPECT_EQ(0, grad_diff_3);
+        EXPECT_EQ(0, grad_diff_2) << blob_name;
+        EXPECT_EQ(0, grad_diff_3) << blob_name;
       }
     }
   }
@@ -1092,7 +894,7 @@ TYPED_TEST(NetTest, TestSharedWeightsDiffNet) {
   }
 }
 
-TYPED_TEST_ALL_DEVICES(NetTest, TestSharedWeightsUpdate,
+TYPED_TEST(NetTest, TestSharedWeightsUpdate) {
   Caffe::set_random_seed(this->seed_);
   this->InitDiffDataSharedWeightsNet();
   vector<Blob<TypeParam>*> bottom;
@@ -1176,6 +978,6 @@ TYPED_TEST_ALL_DEVICES(NetTest, TestSharedWeightsUpdate,
     EXPECT_NE(actual_updated_params1[i], actual_updated_params2[i]);
     EXPECT_NE(expected_updated_params, expected_updated_params1);
   }
-)
+}
 
 }  // namespace caffe

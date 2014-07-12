@@ -238,9 +238,9 @@ inline Dtype Layer<Dtype>::Forward(const vector<Blob<Dtype>*>& bottom,
       const int count = (*top)[top_id]->count();
       const Dtype* data = (*top)[top_id]->gpu_data();
       const Dtype* loss_weights = (*top)[top_id]->gpu_diff();
-      Dtype layer_loss = 0;
-      caffe_gpu_dot(count, data, loss_weights, &layer_loss);
-      loss += layer_loss;
+      Dtype blob_loss = 0;
+      caffe_gpu_dot(count, data, loss_weights, &blob_loss);
+      loss += blob_loss;
     }
     break;
   default:
