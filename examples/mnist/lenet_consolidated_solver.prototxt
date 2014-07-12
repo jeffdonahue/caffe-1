@@ -145,10 +145,18 @@ train_net_param {
     }
   }
   layers {
+    name: "accuracy"
+    type: ACCURACY
+    bottom: "ip2"
+    bottom: "label"
+    top: "accuracy"
+  }
+  layers {
     name: "loss"
     type: SOFTMAX_LOSS
     bottom: "ip2"
     bottom: "label"
+    top: "softmax_error"
   }
 }
 
