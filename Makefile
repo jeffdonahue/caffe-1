@@ -194,7 +194,7 @@ else ifeq ($(UNAME), Darwin)
 endif
 
 ifeq ($(LINUX), 1)
-	CXX := /usr/bin/g++
+	CXX ?= /usr/bin/g++
 	GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
 	# older versions of gcc are too dumb to build boost with -Wuninitalized
 	ifeq ($(shell echo $(GCCVERSION) \< 4.6 | bc), 1)
@@ -206,7 +206,7 @@ endif
 # clang++ instead of g++
 # libstdc++ instead of libc++ for CUDA compatibility on 10.9
 ifeq ($(OSX), 1)
-	CXX := /usr/bin/clang++
+	CXX ?= /usr/bin/clang++
 	# clang throws this warning for cuda headers
 	WARNINGS += -Wno-unneeded-internal-declaration
 	ifneq ($(findstring 10.9, $(shell sw_vers -productVersion)),)
