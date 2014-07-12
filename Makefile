@@ -28,7 +28,7 @@ STATIC_NAME := $(LIB_BUILD_DIR)/lib$(PROJECT).a
 # CXX_SRCS are the source files excluding the test ones.
 CXX_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cpp" -name "*.cpp")
 # HXX_SRCS are the header files
-HXX_SRCS := $(shell find include/$(PROJECT) -name "*.hpp")
+HXX_SRCS := $(shell find include/$(PROJECT) ! -name "test_*.hpp" -name "*.hpp")
 # CU_SRCS are the cuda source files
 CU_SRCS := $(shell find src/$(PROJECT) ! -name "test_*.cu" -name "*.cu")
 # TEST_SRCS are the test source files
@@ -38,7 +38,7 @@ TEST_SRCS := $(filter-out $(TEST_MAIN_SRC), $(TEST_SRCS))
 TEST_CU_SRCS := $(shell find src/$(PROJECT) -name "test_*.cu")
 GTEST_SRC := src/gtest/gtest-all.cpp
 # TEST_HDRS are the test header files
-TEST_HDRS := $(shell find src/$(PROJECT) -name "test_*.hpp")
+TEST_HDRS := $(shell find include/$(PROJECT) -name "test_*.hpp")
 # TOOL_SRCS are the source files for the tool binaries
 TOOL_SRCS := $(shell find tools -name "*.cpp")
 # EXAMPLE_SRCS are the source files for the example binaries
