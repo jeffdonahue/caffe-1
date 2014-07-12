@@ -1,4 +1,6 @@
 language: cpp
+# Cache Ubuntu apt packages.
+cache: apt
 compiler:
   - gcc
 # Disable clang build: doesn't seem to work on Linux.
