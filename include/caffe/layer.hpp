@@ -66,14 +66,14 @@ class Layer {
   // Writes the layer parameter to a protocol buffer
   virtual void ToProto(LayerParameter* param, bool write_diff = false);
 
-  inline bool has_loss(int top_index) {
-    return has_loss_.size() > top_index && has_loss_[top_index];
+  inline Dtype loss(const int top_index) const {
+    return (loss_.size() > top_index) ? loss_[top_index] : Dtype(0);
   }
-  inline void set_has_loss(int top_index, bool value) {
-    if (has_loss_.size() <= top_index) {
-      has_loss_.resize(top_index + 1, false);
+  inline void set_loss(const int top_index, const Dtype value) {
+    if (loss_.size() <= top_index) {
+      loss_.resize(top_index + 1, Dtype(0));
     }
-    has_loss_[top_index] = value;
+    loss_[top_index] = value;
   }
   // Setup the weights associated with each top blob in the loss function.
   // Store non-zero loss weights in the diff blob.
@@ -85,7 +85,7 @@ class Layer {
       for (int top_id = 0; top_id < top->size(); ++top_id) {
         const Dtype loss_weight = layer_param_.top_loss_weight(top_id);
         if (loss_weight == Dtype(0)) { continue; }
-        this->set_has_loss(top_id, true);
+        this->set_loss(top_id, loss_weight);
         const int count = (*top)[top_id]->count();
         Dtype* loss_multiplier = (*top)[top_id]->mutable_cpu_diff();
         caffe_set(count, loss_weight, loss_multiplier);
@@ -143,7 +143,7 @@ class Layer {
 
   // The vector that indicates whether each top blob has a non-zero weight in
   // the objective function.
-  vector<bool> has_loss_;
+  vector<Dtype> loss_;
 
   // Forward functions: compute the layer output
   // (and loss layers return the loss; other layers return the dummy value 0.)
@@ -224,7 +224,7 @@ inline Dtype Layer<Dtype>::Forward(const vector<Blob<Dtype>*>& bottom,
   case Caffe::CPU:
     Forward_cpu(bottom, top);
     for (int top_id = 0; top_id < top->size(); ++top_id) {
-      if (!this->has_loss(top_id)) { continue; }
+      if (!this->loss(top_id)) { continue; }
       const int count = (*top)[top_id]->count();
       const Dtype* data = (*top)[top_id]->cpu_data();
       const Dtype* loss_weights = (*top)[top_id]->cpu_diff();
@@ -234,7 +234,7 @@ inline Dtype Layer<Dtype>::Forward(const vector<Blob<Dtype>*>& bottom,
   case Caffe::GPU:
     Forward_gpu(bottom, top);
     for (int top_id = 0; top_id < top->size(); ++top_id) {
-      if (!this->has_loss(top_id)) { continue; }
+      if (!this->loss(top_id)) { continue; }
       const int count = (*top)[top_id]->count();
       const Dtype* data = (*top)[top_id]->gpu_data();
       const Dtype* loss_weights = (*top)[top_id]->gpu_diff();
