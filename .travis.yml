@@ -37,13 +37,18 @@ branches:
     - dev
     - travisci
 notifications:
+# Emails are sent to the committer's git-configured email address by default,
+# but only if they have access to the repository.  To enable Travis on your
+# public fork of Caffe, just go to travis-ci.org and flip the switch on for
+# your Caffe fork.  To configure your git email address, use:
+#     git config --global user.email me@example.com
   email:
-    recipients:
-      - huy@huyng.com
-    on_success: change
+    on_success: always
     on_failure: always
-  irc:
-    channels:
-      - "chat.freenode.net#caffe"
-    template:
-      - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
+# IRC notifications disabled by default.
+# Uncomment next 5 lines to send notifications to chat.freenode.net#caffe
+#   irc:
+#     channels:
+#       - "chat.freenode.net#caffe"
+#     template:
+#       - "%{repository}/%{branch} (%{commit} - %{author}): %{message}"
