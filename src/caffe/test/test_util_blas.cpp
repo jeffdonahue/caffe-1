@@ -15,12 +15,10 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-typedef ::testing::Types<float, double> Dtypes;
-
-template <typename Dtype>
+template <typename TypeParam>
 class GemmTest : public ::testing::Test {};
 
-TYPED_TEST_CASE(GemmTest, Dtypes);
+TYPED_TEST_CASE(GemmTest, TestDtypes);
 
 TYPED_TEST(GemmTest, TestGemmCPUGPU) {
   Blob<TypeParam> A(1, 1, 2, 3);

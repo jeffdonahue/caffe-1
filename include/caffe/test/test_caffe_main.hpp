@@ -12,34 +12,51 @@
 #include <cstdlib>
 #include <cstdio>
 
+#include "caffe/common.hpp"
+
 using std::cout;
 using std::endl;
 
 int main(int argc, char** argv);
 
-// *TEST*_ALL_DEVICES creates a copy of a test for each device.
-// Whenever possible, this should be used rather than creating copy-paste
-// test duplicates for each device.
-// (Currently should really just be TEST_BOTH_DEVICES as Caffe currently just
-// two devices: CPU and GPU, but named TEST_ALL_DEVCIES for future-proofing.)
-#define TEST_F_ALL_DEVICES(CaseName, TestName, TestBody) \
-  TEST_F_DEVICE(CaseName, TestName, CPU, TestBody) \
-  TEST_F_DEVICE(CaseName, TestName, GPU, TestBody)
+namespace caffe {
 
-#define TEST_F_DEVICE(CaseName, TestName, DeviceName, TestBody) \
-  TEST_F(CaseName, TestName##DeviceName) { \
-    Caffe::set_mode(Caffe::DeviceName); \
-    TestBody \
+template <typename TypeParam>
+class MultiDeviceTest : public ::testing::Test {
+ public:
+  typedef typename TypeParam::Dtype Dtype;
+ protected:
+  MultiDeviceTest() {
+    Caffe::set_mode(TypeParam::device);
   }
+  virtual ~MultiDeviceTest() {}
+};
 
-#define TYPED_TEST_ALL_DEVICES(CaseName, TestName, TestBody) \
-  TYPED_TEST_DEVICE(CaseName, TestName, CPU, TestBody) \
-  TYPED_TEST_DEVICE(CaseName, TestName, GPU, TestBody)
+typedef ::testing::Types<float, double> TestDtypes;
 
-#define TYPED_TEST_DEVICE(CaseName, TestName, DeviceName, TestBody) \
-  TYPED_TEST(CaseName, TestName##DeviceName) { \
-    Caffe::set_mode(Caffe::DeviceName); \
-    TestBody \
-  }
+struct FloatCPU {
+  typedef float Dtype;
+  static const Caffe::Brew device = Caffe::CPU;
+};
+
+struct DoubleCPU {
+  typedef double Dtype;
+  static const Caffe::Brew device = Caffe::CPU;
+};
+
+struct FloatGPU {
+  typedef float Dtype;
+  static const Caffe::Brew device = Caffe::GPU;
+};
+
+struct DoubleGPU {
+  typedef double Dtype;
+  static const Caffe::Brew device = Caffe::GPU;
+};
+
+typedef ::testing::Types<FloatCPU, DoubleCPU, FloatGPU, DoubleGPU>
+    TestDtypesAndDevices;
+
+}  // namespace caffe
 
 #endif  // CAFFE_TEST_TEST_CAFFE_MAIN_HPP_

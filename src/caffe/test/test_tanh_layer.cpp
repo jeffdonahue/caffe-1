@@ -19,8 +19,9 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-template <typename Dtype>
-class TanHLayerTest : public ::testing::Test {
+template <typename TypeParam>
+class TanHLayerTest : public MultiDeviceTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
  protected:
   TanHLayerTest()
       : blob_bottom_(new Blob<Dtype>(2, 10, 1, 1)),
@@ -39,12 +40,12 @@ class TanHLayerTest : public ::testing::Test {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-typedef ::testing::Types<float, double> Dtypes;
-TYPED_TEST_CASE(TanHLayerTest, Dtypes);
+TYPED_TEST_CASE(TanHLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST_ALL_DEVICES(TanHLayerTest, TestForwardGPU,
+TYPED_TEST(TanHLayerTest, TestForward) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  TanHLayer<TypeParam> layer(layer_param);
+  TanHLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // Test exact values
@@ -62,14 +63,15 @@ TYPED_TEST_ALL_DEVICES(TanHLayerTest, TestForwardGPU,
       }
     }
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(TanHLayerTest, TestGradient,
+TYPED_TEST(TanHLayerTest, TestGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  TanHLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3);
+  TanHLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
 }  // namespace caffe

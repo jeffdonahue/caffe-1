@@ -17,8 +17,9 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-template <typename Dtype>
-class Im2colLayerTest : public ::testing::Test {
+template <typename TypeParam>
+class Im2colLayerTest : public MultiDeviceTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
  protected:
   Im2colLayerTest()
       : blob_bottom_(new Blob<Dtype>(2, 3, 6, 5)),
@@ -37,16 +38,16 @@ class Im2colLayerTest : public ::testing::Test {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-typedef ::testing::Types<float, double> Dtypes;
-TYPED_TEST_CASE(Im2colLayerTest, Dtypes);
+TYPED_TEST_CASE(Im2colLayerTest, TestDtypesAndDevices);
 
 TYPED_TEST(Im2colLayerTest, TestSetup) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
   convolution_param->set_kernel_size(3);
   convolution_param->set_stride(2);
-  Im2colLayer<TypeParam> layer(layer_param);
+  Im2colLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   EXPECT_EQ(this->blob_top_->num(), 2);
   EXPECT_EQ(this->blob_top_->channels(), 27);
@@ -54,13 +55,14 @@ TYPED_TEST(Im2colLayerTest, TestSetup) {
   EXPECT_EQ(this->blob_top_->width(), 2);
 }
 
-TYPED_TEST_ALL_DEVICES(Im2colLayerTest, TestForward,
+TYPED_TEST(Im2colLayerTest, TestForward) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
   convolution_param->set_kernel_size(3);
   convolution_param->set_stride(2);
-  Im2colLayer<TypeParam> layer(layer_param);
+  Im2colLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // We are lazy and will only check the top left block
@@ -68,19 +70,20 @@ TYPED_TEST_ALL_DEVICES(Im2colLayerTest, TestForward,
     EXPECT_EQ(this->blob_bottom_->data_at(0, (c / 9), (c / 3) % 3, c % 3),
         this->blob_top_->data_at(0, c, 0, 0));
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(Im2colLayerTest, TestGradient,
+TYPED_TEST(Im2colLayerTest, TestGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   ConvolutionParameter* convolution_param =
       layer_param.mutable_convolution_param();
   convolution_param->set_kernel_size(3);
   convolution_param->set_stride(2);
-  Im2colLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2);
+  Im2colLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-2);
   checker.CheckGradientExhaustive(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
 
 }  // namespace caffe

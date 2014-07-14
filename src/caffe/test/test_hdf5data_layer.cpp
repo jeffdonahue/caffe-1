@@ -20,8 +20,10 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-template <typename Dtype>
-class HDF5DataLayerTest : public ::testing::Test {
+template <typename TypeParam>
+class HDF5DataLayerTest : public MultiDeviceTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
+
  protected:
   HDF5DataLayerTest()
       : filename(NULL),
@@ -49,10 +51,10 @@ class HDF5DataLayerTest : public ::testing::Test {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-typedef ::testing::Types<float, double> Dtypes;
-TYPED_TEST_CASE(HDF5DataLayerTest, Dtypes);
+TYPED_TEST_CASE(HDF5DataLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST_ALL_DEVICES(HDF5DataLayerTest, TestRead,
+TYPED_TEST(HDF5DataLayerTest, TestRead) {
+  typedef typename TypeParam::Dtype Dtype;
   // Create LayerParameter with the known parameters.
   // The data file we are reading has 10 rows and 8 columns,
   // with values from 0 to 10*8 reshaped in row-major order.
@@ -66,7 +68,7 @@ TYPED_TEST_ALL_DEVICES(HDF5DataLayerTest, TestRead,
   int width = 5;
 
   // Test that the layer setup got the correct parameters.
-  HDF5DataLayer<TypeParam> layer(param);
+  HDF5DataLayer<Dtype> layer(param);
   layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
   EXPECT_EQ(this->blob_top_data_->num(), batch_size);
   EXPECT_EQ(this->blob_top_data_->channels(), num_cols);
@@ -118,6 +120,6 @@ TYPED_TEST_ALL_DEVICES(HDF5DataLayerTest, TestRead,
       }
     }
   }
-)
+}
 
 }  // namespace caffe

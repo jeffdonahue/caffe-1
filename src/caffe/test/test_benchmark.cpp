@@ -12,16 +12,19 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-class BenchmarkTest : public ::testing::Test {};
+template <typename TypeParam>
+class BenchmarkTest : public MultiDeviceTest<TypeParam> {};
 
-TEST_F_ALL_DEVICES(BenchmarkTest, TestTimerConstructor,
+TYPED_TEST_CASE(BenchmarkTest, TestDtypesAndDevices);
+
+TYPED_TEST(BenchmarkTest, TestTimerConstructor) {
   Timer timer;
   EXPECT_TRUE(timer.initted());
   EXPECT_FALSE(timer.running());
   EXPECT_FALSE(timer.has_run_at_least_once());
-)
+}
 
-TEST_F_ALL_DEVICES(BenchmarkTest, TestTimerStart,
+TYPED_TEST(BenchmarkTest, TestTimerStart) {
   Timer timer;
   timer.Start();
   EXPECT_TRUE(timer.initted());
@@ -36,9 +39,9 @@ TEST_F_ALL_DEVICES(BenchmarkTest, TestTimerStart,
   EXPECT_TRUE(timer.initted());
   EXPECT_TRUE(timer.running());
   EXPECT_TRUE(timer.has_run_at_least_once());
-)
+}
 
-TEST_F_ALL_DEVICES(BenchmarkTest, TestTimerStop,
+TYPED_TEST(BenchmarkTest, TestTimerStop) {
   Timer timer;
   timer.Stop();
   EXPECT_TRUE(timer.initted());
@@ -53,36 +56,36 @@ TEST_F_ALL_DEVICES(BenchmarkTest, TestTimerStop,
   EXPECT_TRUE(timer.initted());
   EXPECT_FALSE(timer.running());
   EXPECT_TRUE(timer.has_run_at_least_once());
-)
+}
 
-TEST_F_ALL_DEVICES(BenchmarkTest, TestTimerMilliSeconds,
+TYPED_TEST(BenchmarkTest, TestTimerMilliSeconds) {
   Timer timer;
-  CHECK_EQ(timer.MilliSeconds(), 0);
+  EXPECT_EQ(timer.MilliSeconds(), 0);
   EXPECT_TRUE(timer.initted());
   EXPECT_FALSE(timer.running());
   EXPECT_FALSE(timer.has_run_at_least_once());
   timer.Start();
   usleep(300 * 1000);
-  CHECK_GE(timer.MilliSeconds(), 298);
-  CHECK_LE(timer.MilliSeconds(), 302);
+  EXPECT_GE(timer.MilliSeconds(), 298);
+  EXPECT_LE(timer.MilliSeconds(), 302);
   EXPECT_TRUE(timer.initted());
   EXPECT_FALSE(timer.running());
   EXPECT_TRUE(timer.has_run_at_least_once());
-)
+}
 
-TEST_F_ALL_DEVICES(BenchmarkTest, TestTimerSeconds,
+TYPED_TEST(BenchmarkTest, TestTimerSeconds) {
   Timer timer;
-  CHECK_EQ(timer.Seconds(), 0);
+  EXPECT_EQ(timer.Seconds(), 0);
   EXPECT_TRUE(timer.initted());
   EXPECT_FALSE(timer.running());
   EXPECT_FALSE(timer.has_run_at_least_once());
   timer.Start();
   usleep(300 * 1000);
-  CHECK_GE(timer.Seconds(), 0.298);
-  CHECK_LE(timer.Seconds(), 0.302);
+  EXPECT_GE(timer.Seconds(), 0.298);
+  EXPECT_LE(timer.Seconds(), 0.302);
   EXPECT_TRUE(timer.initted());
   EXPECT_FALSE(timer.running());
   EXPECT_TRUE(timer.has_run_at_least_once());
-)
+}
 
 }  // namespace caffe

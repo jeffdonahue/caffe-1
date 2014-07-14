@@ -343,6 +343,9 @@ $(MAT$(PROJECT)_SO): $(MAT$(PROJECT)_SRC) $(STATIC_NAME)
 runtest: $(TEST_ALL_BIN)
 	$(TEST_ALL_BIN) $(TEST_GPUID) --gtest_shuffle
 
+runtestnogpu: $(TEST_ALL_BIN)
+	$(TEST_ALL_BIN) --gtest_shuffle --gtest_filter="-*GPU*:*/2.*:*/3.*"
+
 warn: $(EMPTY_WARN_REPORT)
 
 $(EMPTY_WARN_REPORT): $(ALL_WARNS) | $(BUILD_DIR)

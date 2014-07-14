@@ -20,8 +20,10 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-template <typename Dtype>
-class PowerLayerTest : public ::testing::Test {
+template <typename TypeParam>
+class PowerLayerTest : public MultiDeviceTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
+
  protected:
   PowerLayerTest()
       : blob_bottom_(new Blob<Dtype>(2, 3, 4, 5)),
@@ -90,77 +92,86 @@ class PowerLayerTest : public ::testing::Test {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-typedef ::testing::Types<float, double> Dtypes;
-TYPED_TEST_CASE(PowerLayerTest, Dtypes);
+TYPED_TEST_CASE(PowerLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPower,
-  TypeParam power = 0.37;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPower) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 0.37;
+  Dtype scale = 0.83;
+  Dtype shift = -2.4;
   this->TestForward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerGradient,
-  TypeParam power = 0.37;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 0.37;
+  Dtype scale = 0.83;
+  Dtype shift = -2.4;
   this->TestBackward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerGradientShiftZero,
-  TypeParam power = 0.37;
-  TypeParam scale = 0.83;
-  TypeParam shift = 0.0;
+TYPED_TEST(PowerLayerTest, TestPowerGradientShiftZero) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 0.37;
+  Dtype scale = 0.83;
+  Dtype shift = 0.0;
   this->TestBackward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerZero,
-  TypeParam power = 0.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerZero) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 0.0;
+  Dtype scale = 0.83;
+  Dtype shift = -2.4;
   this->TestForward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerZeroGradient,
-  TypeParam power = 0.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerZeroGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 0.0;
+  Dtype scale = 0.83;
+  Dtype shift = -2.4;
   this->TestBackward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerOne,
-  TypeParam power = 1.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerOne) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 1.0;
+  Dtype scale = 0.83;
+  Dtype shift = -2.4;
   this->TestForward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerOneGradient,
-  TypeParam power = 1.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerOneGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 1.0;
+  Dtype scale = 0.83;
+  Dtype shift = -2.4;
   this->TestBackward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerTwo,
-  TypeParam power = 2.0;
-  TypeParam scale = 0.34;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerTwo) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 2.0;
+  Dtype scale = 0.34;
+  Dtype shift = -2.4;
   this->TestForward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerTwoGradient,
-  TypeParam power = 2.0;
-  TypeParam scale = 0.83;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerTwoGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 2.0;
+  Dtype scale = 0.83;
+  Dtype shift = -2.4;
   this->TestBackward(power, scale, shift);
-)
+}
 
-TYPED_TEST_ALL_DEVICES(PowerLayerTest, TestPowerTwoScaleHalfGradient,
-  TypeParam power = 2.0;
-  TypeParam scale = 0.5;
-  TypeParam shift = -2.4;
+TYPED_TEST(PowerLayerTest, TestPowerTwoScaleHalfGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  Dtype power = 2.0;
+  Dtype scale = 0.5;
+  Dtype shift = -2.4;
   this->TestBackward(power, scale, shift);
-)
+}
 
 }  // namespace caffe

@@ -17,8 +17,9 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-template <typename Dtype>
-class NeuronLayerTest : public ::testing::Test {
+template <typename TypeParam>
+class NeuronLayerTest : public MultiDeviceTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
  protected:
   NeuronLayerTest()
       : blob_bottom_(new Blob<Dtype>(2, 3, 4, 5)),
@@ -38,127 +39,136 @@ class NeuronLayerTest : public ::testing::Test {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-typedef ::testing::Types<float, double> Dtypes;
-TYPED_TEST_CASE(NeuronLayerTest, Dtypes);
+TYPED_TEST_CASE(NeuronLayerTest, TestDtypesAndDevices);
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestReLU,
+TYPED_TEST(NeuronLayerTest, TestReLU) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  ReLULayer<TypeParam> layer(layer_param);
+  ReLULayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // Now, check values
-  const TypeParam* bottom_data = this->blob_bottom_->cpu_data();
-  const TypeParam* top_data = this->blob_top_->cpu_data();
+  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
+  const Dtype* top_data = this->blob_top_->cpu_data();
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     EXPECT_GE(top_data[i], 0.);
     EXPECT_TRUE(top_data[i] == 0 || top_data[i] == bottom_data[i]);
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestReLUGradient,
+TYPED_TEST(NeuronLayerTest, TestReLUGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  ReLULayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3, 1701, 0., 0.01);
+  ReLULayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3, 1701, 0., 0.01);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestSigmoid,
+TYPED_TEST(NeuronLayerTest, TestSigmoid) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SigmoidLayer<TypeParam> layer(layer_param);
+  SigmoidLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // Now, check values
-  const TypeParam* bottom_data = this->blob_bottom_->cpu_data();
-  const TypeParam* top_data = this->blob_top_->cpu_data();
+  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
+  const Dtype* top_data = this->blob_top_->cpu_data();
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     EXPECT_FLOAT_EQ(top_data[i], 1. / (1 + exp(-bottom_data[i])));
     // check that we squashed the value between 0 and 1
     EXPECT_GE(top_data[i], 0.);
     EXPECT_LE(top_data[i], 1.);
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestSigmoidGradient,
+TYPED_TEST(NeuronLayerTest, TestSigmoidGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SigmoidLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3, 1701, 0., 0.01);
+  SigmoidLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3, 1701, 0., 0.01);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestDropout,
+TYPED_TEST(NeuronLayerTest, TestDropout) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   Caffe::set_phase(Caffe::TRAIN);
-  DropoutLayer<TypeParam> layer(layer_param);
+  DropoutLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // Now, check values
-  const TypeParam* bottom_data = this->blob_bottom_->cpu_data();
-  const TypeParam* top_data = this->blob_top_->cpu_data();
+  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
+  const Dtype* top_data = this->blob_top_->cpu_data();
   float scale = 1. / (1. - layer_param.dropout_param().dropout_ratio());
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     if (top_data[i] != 0) {
       EXPECT_EQ(top_data[i], bottom_data[i] * scale);
     }
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestDropoutTestPhase,
+TYPED_TEST(NeuronLayerTest, TestDropoutTestPhase) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   Caffe::set_phase(Caffe::TEST);
-  DropoutLayer<TypeParam> layer(layer_param);
+  DropoutLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // Now, check values
-  const TypeParam* bottom_data = this->blob_bottom_->cpu_data();
-  const TypeParam* top_data = this->blob_top_->cpu_data();
+  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
+  const Dtype* top_data = this->blob_top_->cpu_data();
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     if (top_data[i] != 0) {
       EXPECT_EQ(top_data[i], bottom_data[i]);
     }
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestDropoutGradient,
+TYPED_TEST(NeuronLayerTest, TestDropoutGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   Caffe::set_phase(Caffe::TRAIN);
-  DropoutLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3);
+  DropoutLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestDropoutGradientTest,
+TYPED_TEST(NeuronLayerTest, TestDropoutGradientTest) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
   Caffe::set_phase(Caffe::TEST);
-  DropoutLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3);
+  DropoutLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestBNLL,
+TYPED_TEST(NeuronLayerTest, TestBNLL) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  BNLLLayer<TypeParam> layer(layer_param);
+  BNLLLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   // Now, check values
-  const TypeParam* bottom_data = this->blob_bottom_->cpu_data();
-  const TypeParam* top_data = this->blob_top_->cpu_data();
+  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
+  const Dtype* top_data = this->blob_top_->cpu_data();
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     EXPECT_GE(top_data[i], 0.);
     EXPECT_GE(top_data[i], bottom_data[i]);
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(NeuronLayerTest, TestBNLLGradient,
+TYPED_TEST(NeuronLayerTest, TestBNLLGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  BNLLLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-3);
+  BNLLLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
 
 }  // namespace caffe

@@ -18,8 +18,10 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-template <typename Dtype>
-class SigmoidCrossEntropyLossLayerTest : public ::testing::Test {
+template <typename TypeParam>
+class SigmoidCrossEntropyLossLayerTest : public MultiDeviceTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
+
  protected:
   SigmoidCrossEntropyLossLayerTest()
       : blob_bottom_data_(new Blob<Dtype>(10, 5, 1, 1)),
@@ -95,23 +97,21 @@ class SigmoidCrossEntropyLossLayerTest : public ::testing::Test {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-typedef ::testing::Types<float, double> Dtypes;
-TYPED_TEST_CASE(SigmoidCrossEntropyLossLayerTest, Dtypes);
+TYPED_TEST_CASE(SigmoidCrossEntropyLossLayerTest, TestDtypesAndDevices);
 
-
-TYPED_TEST_ALL_DEVICES(SigmoidCrossEntropyLossLayerTest,
-                       TestSigmoidCrossEntropyLoss,
+TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestSigmoidCrossEntropyLoss) {
   this->TestForward();
-)
+}
 
-TYPED_TEST_ALL_DEVICES(SigmoidCrossEntropyLossLayerTest, TestGradient,
+TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SigmoidCrossEntropyLossLayer<TypeParam> layer(layer_param);
+  SigmoidCrossEntropyLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &this->blob_top_vec_);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2, 1701);
+  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientSingle(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_), 0, -1, -1);
-)
+}
 
 
 }  // namespace caffe

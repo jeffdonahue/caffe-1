@@ -20,8 +20,10 @@ namespace caffe {
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 
-template <typename Dtype>
-class SplitLayerTest : public ::testing::Test {
+template <typename TypeParam>
+class SplitLayerTest : public MultiDeviceTest<TypeParam> {
+  typedef typename TypeParam::Dtype Dtype;
+
  protected:
   SplitLayerTest()
       : blob_bottom_(new Blob<Dtype>(2, 3, 6, 5)),
@@ -47,12 +49,12 @@ class SplitLayerTest : public ::testing::Test {
   vector<Blob<Dtype>*> blob_top_vec_;
 };
 
-typedef ::testing::Types<float, double> Dtypes;
-TYPED_TEST_CASE(SplitLayerTest, Dtypes);
+TYPED_TEST_CASE(SplitLayerTest, TestDtypesAndDevices);
 
 TYPED_TEST(SplitLayerTest, TestSetup) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SplitLayer<TypeParam> layer(layer_param);
+  SplitLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   EXPECT_EQ(this->blob_top_a_->num(), 2);
   EXPECT_EQ(this->blob_top_a_->channels(), 3);
@@ -64,46 +66,50 @@ TYPED_TEST(SplitLayerTest, TestSetup) {
   EXPECT_EQ(this->blob_top_b_->width(), 5);
 }
 
-TYPED_TEST_ALL_DEVICES(SplitLayerTest, Test,
+TYPED_TEST(SplitLayerTest, Test) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SplitLayer<TypeParam> layer(layer_param);
+  SplitLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-    TypeParam bottom_value = this->blob_bottom_->cpu_data()[i];
+    Dtype bottom_value = this->blob_bottom_->cpu_data()[i];
     EXPECT_EQ(bottom_value, this->blob_top_a_->cpu_data()[i]);
     EXPECT_EQ(bottom_value, this->blob_top_b_->cpu_data()[i]);
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(SplitLayerTest, TestInPlace,
+TYPED_TEST(SplitLayerTest, TestInPlace) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SplitLayer<TypeParam> layer(layer_param);
+  SplitLayer<Dtype> layer(layer_param);
   this->blob_top_vec_[0] = this->blob_bottom_vec_[0];
   layer.SetUp(this->blob_bottom_vec_, &(this->blob_top_vec_));
   layer.Forward(this->blob_bottom_vec_, &(this->blob_top_vec_));
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
-    TypeParam bottom_value = this->blob_bottom_->cpu_data()[i];
+    Dtype bottom_value = this->blob_bottom_->cpu_data()[i];
     EXPECT_EQ(bottom_value, this->blob_top_b_->cpu_data()[i]);
   }
-)
+}
 
-TYPED_TEST_ALL_DEVICES(SplitLayerTest, TestGradient,
+TYPED_TEST(SplitLayerTest, TestGradient) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SplitLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2);
+  SplitLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-2);
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
-TYPED_TEST_ALL_DEVICES(SplitLayerTest, TestGradientInPlace,
+TYPED_TEST(SplitLayerTest, TestGradientInPlace) {
+  typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  SplitLayer<TypeParam> layer(layer_param);
-  GradientChecker<TypeParam> checker(1e-2, 1e-2);
+  SplitLayer<Dtype> layer(layer_param);
+  GradientChecker<Dtype> checker(1e-2, 1e-2);
   this->blob_top_vec_[0] = this->blob_bottom_vec_[0];
   checker.CheckGradientEltwise(&layer, &(this->blob_bottom_vec_),
       &(this->blob_top_vec_));
-)
+}
 
 
 class SplitLayerInsertionTest : public ::testing::Test {
