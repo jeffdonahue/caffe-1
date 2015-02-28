@@ -126,6 +126,8 @@ void RecurrentLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   CHECK_EQ(2 + num_recur_blobs + static_input_,
            unrolled_net_->input_blobs().size());
 
+  this->blobs_.resize(0);
+
   // This layer's parameters are any parameters in the layers of the unrolled
   // net. We only want one copy of each parameter, so check that the parameter
   // is "owned" by the layer, rather than shared with another.
