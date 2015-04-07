@@ -8,8 +8,8 @@ installing the tools and dataset.
 
 2) Install the tools, and optionally download the data by running:
 
-    cd tools
-    python setup.py install  # follow prompts to download or skip data
+    cd coco/PythonAPI
+    python setup.py install  # follow prompts to download or skip data, note the image/annotations folder is under coco path
 
 3) Download train/val/test splits using:
 
