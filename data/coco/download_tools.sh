@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
-wget http://msvocds.blob.core.windows.net/annotations-0-9/tools.zip
-unzip tools.zip
-rm tools.zip
+wget https://github.com/pdollar/coco/archive/master.zip
+unzip master.zip
+rm master.zip
+mv coco-master coco
