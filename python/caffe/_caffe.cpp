@@ -186,6 +186,7 @@ BOOST_PYTHON_MODULE(_caffe) {
 
   bp::class_<PyBlob<float>, PyBlobWrap>(
       "Blob", bp::no_init)
+      .add_property("shape",   &PyBlob<float>::shape)
       .add_property("num",      &PyBlob<float>::num)
       .add_property("channels", &PyBlob<float>::channels)
       .add_property("height",   &PyBlob<float>::height)

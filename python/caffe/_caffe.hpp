@@ -33,7 +33,10 @@ class PyBlob {
  public:
   explicit PyBlob(const shared_ptr<Blob<Dtype> > &blob)
       : blob_(blob) {}
-
+  bp::tuple shape() { 
+    const vector<int>& shape = blob_->shape();
+    return bp::make_tuple(shape[0], shape[1], shape[2], shape[3]);
+  }
   int num() const { return blob_->num(); }
   int channels() const { return blob_->channels(); }
   int height() const { return blob_->height(); }
