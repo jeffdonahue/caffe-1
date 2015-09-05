@@ -52,30 +52,6 @@ void LSTMLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
   const FillerParameter& bias_filler =
       this->layer_param_.recurrent_param().bias_filler();
 
-  // Add generic LayerParameter's (without bottoms/tops) of layer types we'll
-  // use to save redundant code.
-  LayerParameter hidden_param;
-  hidden_param.set_type("InnerProduct");
-  hidden_param.mutable_inner_product_param()->set_num_output(num_output * 4);
-  hidden_param.mutable_inner_product_param()->set_bias_term(false);
-  hidden_param.mutable_inner_product_param()->set_axis(2);
-  hidden_param.mutable_inner_product_param()->
-      mutable_weight_filler()->CopyFrom(weight_filler);
-
-  LayerParameter biased_hidden_param(hidden_param);
-  biased_hidden_param.mutable_inner_product_param()->set_bias_term(true);
-  biased_hidden_param.mutable_inner_product_param()->
-      mutable_bias_filler()->CopyFrom(bias_filler);
-
-  LayerParameter sum_param;
-  sum_param.set_type("Eltwise");
-  sum_param.mutable_eltwise_param()->set_operation(
-      EltwiseParameter_EltwiseOp_SUM);
-
-  LayerParameter scalar_param;
-  scalar_param.set_type("Scalar");
-  scalar_param.mutable_scalar_param()->set_axis(0);
-
   LayerParameter slice_param;
   slice_param.set_type("Slice");
   slice_param.mutable_slice_param()->set_axis(0);
@@ -97,13 +73,22 @@ void LSTMLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
   cont_slice_param->CopyFrom(slice_param);
   cont_slice_param->set_name("cont_slice");
   cont_slice_param->add_bottom("cont");
-  cont_slice_param->mutable_slice_param()->set_axis(0);
+
+  LayerParameter hidden_param;
+  hidden_param.set_type("InnerProduct");
+  InnerProductParameter *innerproduct_param = hidden_param.mutable_inner_product_param();
+  innerproduct_param->set_num_output(num_output * 4);
+  innerproduct_param->mutable_weight_filler()->CopyFrom(weight_filler);   
 
   // Add layer to transform all timesteps of x to the hidden state dimension.
   //     W_xc_x = W_xc * x + b_c
   {
     LayerParameter* x_transform_param = net_param->add_layer();
-    x_transform_param->CopyFrom(biased_hidden_param);
+    x_transform_param->CopyFrom(hidden_param);
+    x_transform_param->mutable_inner_product_param()->set_axis(2);
+    x_transform_param->mutable_inner_product_param()->set_bias_term(true);
+    x_transform_param->mutable_inner_product_param()->
+      mutable_bias_filler()->CopyFrom(bias_filler);
     x_transform_param->set_name("x_transform");
     x_transform_param->add_param()->set_name("W_xc");
     x_transform_param->add_param()->set_name("b_c");
@@ -116,23 +101,12 @@ void LSTMLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
     //     W_xc_x_static = W_xc_static * x_static
     LayerParameter* x_static_transform_param = net_param->add_layer();
     x_static_transform_param->CopyFrom(hidden_param);
+    x_static_transform_param->mutable_inner_product_param()->set_bias_term(false);
     x_static_transform_param->mutable_inner_product_param()->set_axis(1);
     x_static_transform_param->set_name("W_xc_x_static");
     x_static_transform_param->add_param()->set_name("W_xc_static");
     x_static_transform_param->add_bottom("x_static");
-    x_static_transform_param->add_top("W_xc_x_static_preshape");
-
-    LayerParameter* reshape_param = net_param->add_layer();
-    reshape_param->set_type("Reshape");
-    BlobShape* new_shape =
-         reshape_param->mutable_reshape_param()->mutable_shape();
-    new_shape->add_dim(1);  // One timestep.
-    // Should infer this->N as the dimension so we can reshape on batch size.
-    new_shape->add_dim(-1);
-    new_shape->add_dim(
-        x_static_transform_param->inner_product_param().num_output());
-    reshape_param->add_bottom("W_xc_x_static_preshape");
-    reshape_param->add_top("W_xc_x_static");
+    x_static_transform_param->add_top("W_xc_x_static");
   }
 
   LayerParameter* x_slice_param = net_param->add_layer();
@@ -153,51 +127,8 @@ void LSTMLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
     cont_slice_param->add_top("cont_" + ts);
     x_slice_param->add_top("W_xc_x_" + ts);
 
-    // Add layers to flush the hidden state when beginning a new
-    // sequence, as indicated by cont_t.
-    //     h_conted_{t-1} := cont_t * h_{t-1}
-    //
-    // Normally, cont_t is binary (i.e., 0 or 1), so:
-    //     h_conted_{t-1} := h_{t-1} if cont_t == 1
-    //                       0   otherwise
-    {
-      LayerParameter* cont_h_param = net_param->add_layer();
-      cont_h_param->CopyFrom(scalar_param);
-      cont_h_param->set_name("h_conted_" + tm1s);
-      cont_h_param->add_bottom("h_" + tm1s);
-      cont_h_param->add_bottom("cont_" + ts);
-      cont_h_param->add_top("h_conted_" + tm1s);
-    }
-
-    // Add layer to compute
-    //     W_hc_h_{t-1} := W_hc * h_conted_{t-1}
-    {
-      LayerParameter* w_param = net_param->add_layer();
-      w_param->CopyFrom(hidden_param);
-      w_param->set_name("transform_" + ts);
-      w_param->add_param()->set_name("W_hc");
-      w_param->add_bottom("h_conted_" + tm1s);
-      w_param->add_top("W_hc_h_" + tm1s);
-      w_param->mutable_inner_product_param()->set_axis(2);
-    }
-
-    // Add the outputs of the linear transformations to compute the gate input.
-    //     gate_input_t := W_hc * h_conted_{t-1} + W_xc * x_t + b_c
-    //                   = W_hc_h_{t-1} + W_xc_x_t + b_c
-    {
-      LayerParameter* input_sum_layer = net_param->add_layer();
-      input_sum_layer->CopyFrom(sum_param);
-      input_sum_layer->set_name("gate_input_" + ts);
-      input_sum_layer->add_bottom("W_hc_h_" + tm1s);
-      input_sum_layer->add_bottom("W_xc_x_" + ts);
-      if (this->static_input_) {
-        input_sum_layer->add_bottom("W_xc_x_static");
-      }
-      input_sum_layer->add_top("gate_input_" + ts);
-    }
-
     // Add LSTMUnit layer to compute the cell & hidden vectors c_t and h_t.
-    // Inputs: c_{t-1}, gate_input_t = (i_t, f_t, o_t, g_t), cont_t
+    // Inputs: c_{t-1}, h_{t-1}, W_cx_x, cont_t
     // Outputs: c_t, h_t
     //     [ i_t' ]
     //     [ f_t' ] := gate_input_t
@@ -212,15 +143,21 @@ void LSTMLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
     {
       LayerParameter* lstm_unit_param = net_param->add_layer();
       lstm_unit_param->set_type("LSTMUnit");
+      lstm_unit_param->mutable_inner_product_param()->
+        mutable_weight_filler()->CopyFrom(weight_filler);
+      lstm_unit_param->add_param()->set_name("W_hc");
       lstm_unit_param->add_bottom("c_" + tm1s);
-      lstm_unit_param->add_bottom("gate_input_" + ts);
+      lstm_unit_param->add_bottom("h_" + tm1s);
+      lstm_unit_param->add_bottom("W_xc_x_" + ts);
       lstm_unit_param->add_bottom("cont_" + ts);
+      if (this->static_input_)
+        lstm_unit_param->add_bottom("W_xc_x_static");
       lstm_unit_param->add_top("c_" + ts);
       lstm_unit_param->add_top("h_" + ts);
       lstm_unit_param->set_name("unit_" + ts);
     }
     output_concat_layer.add_bottom("h_" + ts);
-  }  // for (int t = 1; t <= this->T_; ++t)
+  }
 
   {
     LayerParameter* c_T_copy_param = net_param->add_layer();
