@@ -1,0 +1,24 @@
+diff --git a/src/caffe/proto/caffe.proto b/src/caffe/proto/caffe.proto
+index 84b475c..937360c 100644
+--- a/src/caffe/proto/caffe.proto
++++ b/src/caffe/proto/caffe.proto
+@@ -401,6 +401,9 @@ message ConvolutionParameter {
+     CUDNN = 2;
+   }
+   optional Engine engine = 15 [default = DEFAULT];
++  optional uint32 kstride = 20 [default = 1];  // kstride for fully convolutional networks
++  optional uint32 kstride_h = 21; 
++  optional uint32 kstride_w = 22;
+ }
+ 
+ // Message that stores parameters used by DataLayer
+@@ -608,6 +611,9 @@ message PoolingParameter {
+   // If global_pooling then it will pool over the size of the bottom by doing
+   // kernel_h = bottom->height and kernel_w = bottom->width
+   optional bool global_pooling = 12 [default = false];
++  optional uint32 kstride = 20 [default = 1]; // The kernel stride for pooling layers of FCN
++  optional uint32 kstride_h = 21;
++  optional uint32 kstride_w = 22;
+ }
+ 
+ // Message that stores parameters used by PowerLayer

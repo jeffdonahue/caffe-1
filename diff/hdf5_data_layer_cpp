@@ -1,0 +1,12 @@
+diff --git a/src/caffe/layers/hdf5_data_layer.cpp b/src/caffe/layers/hdf5_data_layer.cpp
+index 3d856ec..22e9521 100644
+--- a/src/caffe/layers/hdf5_data_layer.cpp
++++ b/src/caffe/layers/hdf5_data_layer.cpp
+@@ -27,6 +27,7 @@ HDF5DataLayer<Dtype>::~HDF5DataLayer<Dtype>() { }
+ template <typename Dtype>
+ void HDF5DataLayer<Dtype>::LoadHDF5FileData(const char* filename) {
+   DLOG(INFO) << "Loading HDF5 file: " << filename;
++  //LOG(INFO) << "Loading HDF5 file: " << filename;
+   hid_t file_id = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+   if (file_id < 0) {
+     LOG(FATAL) << "Failed opening HDF5 file: " << filename;

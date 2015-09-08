@@ -7,6 +7,7 @@
 namespace caffe {
 
 SyncedMemory::~SyncedMemory() {
+  //LOG(INFO) << "decomposing SyncedMemory";
   if (cpu_ptr_ && own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
   }
@@ -22,6 +23,7 @@ SyncedMemory::~SyncedMemory() {
     cudaSetDevice(initial_device);
   }
 #endif  // CPU_ONLY
+  //LOG(INFO) << "SyncedMemory decomposed";
 }
 
 inline void SyncedMemory::to_cpu() {

@@ -20,7 +20,7 @@ __global__ void im2col_gpu_kernel(const int n, const Dtype* data_im,
     const int pad_h, const int pad_w,
     const int stride_h, const int stride_w,
     const int height_col, const int width_col,
-    Dtype* data_col);
+    Dtype* data_col, const int kstride_h = 1, const int kstride_w = 1);
 
 extern cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 

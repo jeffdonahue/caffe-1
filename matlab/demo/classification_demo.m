@@ -72,9 +72,13 @@ end
 
 % Initialize the network using BVLC CaffeNet for image classification
 % Weights (parameter) file needs to be downloaded from Model Zoo.
-model_dir = '../../models/bvlc_reference_caffenet/';
-net_model = [model_dir 'deploy.prototxt'];
-net_weights = [model_dir 'bvlc_reference_caffenet.caffemodel'];
+
+% model_dir = '../../models/bvlc_reference_caffenet/';
+% net_model = [model_dir 'deploy.prototxt'];
+% net_weights = [model_dir 'bvlc_reference_caffenet.caffemodel'];
+model_dir = '/home/wlouyang/FCT_scale/';
+net_model = [model_dir 'feature_net.prototxt'];
+net_weights = [model_dir 'VGG_ILSVRC_16_layers.caffemodel'];
 phase = 'test'; % run with phase test (so that dropout isn't applied)
 if ~exist(net_weights, 'file')
   error('Please download CaffeNet from Model Zoo before you run this demo');

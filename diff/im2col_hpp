@@ -1,0 +1,22 @@
+diff --git a/include/caffe/util/im2col.hpp b/include/caffe/util/im2col.hpp
+index 0051e2f..c2b6bd6 100644
+--- a/include/caffe/util/im2col.hpp
++++ b/include/caffe/util/im2col.hpp
+@@ -7,7 +7,7 @@ template <typename Dtype>
+ void im2col_cpu(const Dtype* data_im, const int channels,
+     const int height, const int width, const int kernel_h, const int kernel_w,
+     const int pad_h, const int pad_w, const int stride_h,
+-    const int stride_w, Dtype* data_col);
++    const int stride_w, Dtype* data_col, const int kstride_h = 1, const int kstride_w = 1);
+ 
+ template <typename Dtype>
+ void col2im_cpu(const Dtype* data_col, const int channels,
+@@ -19,7 +19,7 @@ template <typename Dtype>
+ void im2col_gpu(const Dtype* data_im, const int channels,
+     const int height, const int width, const int kernel_h, const int kernel_w,
+     const int pad_h, const int pad_w, const int stride_h,
+-    const int stride_w, Dtype* data_col);
++    const int stride_w, Dtype* data_col, const int kstride_h = 1, const int kstride_w = 1);
+ 
+ template <typename Dtype>
+ void col2im_gpu(const Dtype* data_col, const int channels,

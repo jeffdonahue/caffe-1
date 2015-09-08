@@ -305,6 +305,10 @@ class Layer {
     return (param_propagate_down_.size() > param_id) ?
         param_propagate_down_[param_id] : false;
   }
+
+  inline void set_phase(Phase phase) {
+    phase_ = phase;
+  }
   /**
    * @brief Sets whether the layer should compute gradients w.r.t. a
    *        parameter at a particular index given by param_id.
@@ -315,6 +319,17 @@ class Layer {
     }
     param_propagate_down_[param_id] = value;
   }
+
+  // Functions for FNC2CNN and CNN2FCN
+  virtual inline void set_kstride(int kstride) {};
+  virtual inline void set_pad(int pad) {};
+  virtual inline void set_stride(int stride) {};
+  virtual inline int get_stride() {return 0;};
+  virtual inline void update_is1x1() {};
+  virtual inline void update_ext_stride() {};
+  virtual inline void check_poolmethod(PoolingParameter_PoolMethod method) {};
+  virtual inline int get_kernel_size() {return 0;};
+
 
 
  protected:

@@ -596,6 +596,7 @@ Dtype Net<Dtype>::ForwardFromTo(int start, int end) {
   }
   for (int i = start; i <= end; ++i) {
     // LOG(ERROR) << "Forwarding " << layer_names_[i];
+    //layers_[i]->Reshape(bottom_vecs_[i], top_vecs_[i]);
     Dtype layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
     loss += layer_loss;
     if (debug_info_) { ForwardDebugInfo(i); }
@@ -1082,6 +1083,73 @@ const shared_ptr<Layer<Dtype> > Net<Dtype>::layer_by_name(
   return layer_ptr;
 }
 
+template <typename Dtype>
+void Net<Dtype>::set_net_phase(Phase phase) {
+  phase_ = phase;
+  for (int layer_id = 0; layer_id < layers_.size(); layer_id++) {
+    layers_[layer_id]->set_phase(phase);
+  }
+}
+
+template <typename Dtype>
+void Net<Dtype>::CNN2FCN(int kstride, int pad) {
+  //int kstride = 1;
+  //int pad = 1;
+  for (int layer_id = 0; layer_id < layers_.size(); layer_id++) {
+    Layer<Dtype>* layer = layers_[layer_id].get();
+    if (strcmp(layer->type(), "Convolution") == 0) {
+      layer->set_kstride(kstride);
+      //layer->set_pad(pad);
+      layer->set_stride(1);
+      if (pad != 0) {
+	pad = kstride * (layer->get_kernel_size()/2);
+      }
+      layer->set_pad(pad);
+      kstride *= layer->get_stride();
+      layer->update_ext_stride();
+      layer->update_is1x1();
+    } else if (strcmp(layer->type(), "Pooling") == 0) {
+      layer->check_poolmethod(PoolingParameter_PoolMethod_MAX);
+      //CHECK(layer->pool_param.pool() == PoolingParameter_PoolMethod_MAX) << "Only max pooling is impelmented for FCN.";
+      layer->set_kstride(kstride);
+      // Do not pad for pooling layer
+      //if (pad != 0) {
+      //  pad = kstride;
+      //}
+      //layer->set_pad(pad);
+      kstride *= layer->get_stride();
+      layer->set_stride(1);
+      layer->update_ext_stride();
+    }
+    layer->Reshape(bottom_vecs_[layer_id], top_vecs_[layer_id]);
+  }
+}
+
+template <typename Dtype> 
+void Net<Dtype>::FCN2CNN(int pad) {
+  for (int layer_id = 0; layer_id < layers_.size(); layer_id++) {
+    Layer<Dtype>* layer = layers_[layer_id].get();
+    if (strcmp(layer->type(), "Convolution") == 0) {
+      layer->set_kstride(1);
+      //layer->set_pad(1);
+      if (pad == 0) {
+	layer->set_pad(0);
+      } else {
+	pad = layer->get_kernel_size()/2;
+	layer->set_pad(pad);
+      }
+      layer->update_is1x1();
+      layer->update_ext_stride();
+    } else if (strcmp(layer->type(), "Pooling") == 0) {
+      layer->set_kstride(1);
+      layer->set_stride(2);
+      layer->update_ext_stride();
+    }
+    layer->Reshape(bottom_vecs_[layer_id], top_vecs_[layer_id]);
+  }
+}
+
+  
 INSTANTIATE_CLASS(Net);
 
 }  // namespace caffe

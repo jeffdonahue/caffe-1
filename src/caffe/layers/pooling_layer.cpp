@@ -37,6 +37,11 @@ void PoolingLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       && pool_param.has_stride_w())
       || (!pool_param.has_stride_h() && !pool_param.has_stride_w()))
       << "Stride is stride OR stride_h and stride_w are required.";
+  CHECK((!pool_param.has_kstride() && pool_param.has_kstride_h()
+      && pool_param.has_kstride_w())
+      || (!pool_param.has_kstride_h() && !pool_param.has_kstride_w()))
+      << "KStride is kstride OR kstride_h and kstride_w are required.";
+
   global_pooling_ = pool_param.global_pooling();
   if (global_pooling_) {
     kernel_h_ = bottom[0]->height();
@@ -76,6 +81,20 @@ void PoolingLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     CHECK_LT(pad_h_, kernel_h_);
     CHECK_LT(pad_w_, kernel_w_);
   }
+  if (!pool_param.has_kstride_h()) {
+    kstride_h_ = kstride_w_ = pool_param.kstride();
+  } else {
+    kstride_h_ = pool_param.kstride_h();
+    kstride_w_ = pool_param.kstride_w();
+  }
+  if (!(kstride_h_ == 1) || !(kstride_w_ == 1)) {
+    CHECK_EQ(stride_h_, 1) << "Currently, when using kstride, the stride parameter should be fixed to 1.";
+    CHECK_EQ(stride_w_, 1) << "Currently, when using kstride, the stride parameter should be fixed to 1.";
+    CHECK(pool_param.pool() == PoolingParameter_PoolMethod_MAX) << "Only max pooling is impelmented for FCN.";
+  }
+  ext_kernel_h_ = (kernel_h_ - 1) * kstride_h_ + 1;
+  ext_kernel_w_ = (kernel_w_ - 1) * kstride_w_ + 1;
+
 }
 
 template <typename Dtype>
@@ -91,9 +110,9 @@ void PoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     kernel_w_ = bottom[0]->width();
   }
   pooled_height_ = static_cast<int>(ceil(static_cast<float>(
-      height_ + 2 * pad_h_ - kernel_h_) / stride_h_)) + 1;
+	  height_ + 2 * pad_h_ - ext_kernel_h_) / stride_h_)) + 1;
   pooled_width_ = static_cast<int>(ceil(static_cast<float>(
-      width_ + 2 * pad_w_ - kernel_w_) / stride_w_)) + 1;
+	  width_ + 2 * pad_w_ - ext_kernel_w_) / stride_w_)) + 1;
   if (pad_h_ || pad_w_) {
     // If we have padding, ensure that the last pooling starts strictly
     // inside the image (instead of at the padding); otherwise clip the last.
@@ -130,6 +149,7 @@ void PoolingLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
+  CHECK((kstride_h_ == 1) && (kstride_w_ == 1)) << "Forward_cpu is not implemented for FCN pooling.";
   const Dtype* bottom_data = bottom[0]->cpu_data();
   Dtype* top_data = top[0]->mutable_cpu_data();
   const int top_count = top[0]->count();
@@ -232,6 +252,8 @@ void PoolingLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void PoolingLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+
+  CHECK((kstride_h_ == 1) && (kstride_w_ == 1)) << "Backward_cpu is not implemented for FCN pooling.";
   if (!propagate_down[0]) {
     return;
   }

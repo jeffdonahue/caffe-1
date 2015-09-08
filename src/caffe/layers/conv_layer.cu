@@ -29,6 +29,8 @@ void ConvolutionLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+  //LOG(INFO) << "start of convolutionlayer backward_gpu";
+  //CHECK((this->kstride_h_ == 1) && (this->kstride_w_ == 1)) << "Backward_gpu is not implemented for fully convolutin.";
   const Dtype* weight = this->blobs_[0]->gpu_data();
   Dtype* weight_diff = this->blobs_[0]->mutable_gpu_diff();
   for (int i = 0; i < top.size(); ++i) {
@@ -46,8 +48,14 @@ void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       for (int n = 0; n < this->num_; ++n) {
         // gradient w.r.t. weight. Note that we will accumulate diffs.
         if (this->param_propagate_down_[0]) {
-          this->weight_gpu_gemm(bottom_data + bottom[i]->offset(n),
+	  if (this->kstride_h_ == 1) {
+	    this->weight_gpu_gemm(bottom_data + bottom[i]->offset(n),
               top_diff + top[i]->offset(n), weight_diff);
+	  } else {
+	    this->fcn_weight_gpu_gemm(bottom_data + bottom[i]->offset(n),
+              top_diff + top[i]->offset(n), weight_diff);
+	    //LOG(INFO) << "fcn_weight_gpu_gemm";
+	  }
         }
         // gradient w.r.t. bottom data, if necessary.
         if (propagate_down[i]) {
@@ -57,6 +65,7 @@ void ConvolutionLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       }
     }
   }
+  //LOG(INFO) << "end of convolutionlayer backward_gpu";
 }
 
 INSTANTIATE_LAYER_GPU_FUNCS(ConvolutionLayer);

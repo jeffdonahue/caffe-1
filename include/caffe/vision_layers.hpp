@@ -33,6 +33,47 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   virtual inline int MinBottomBlobs() const { return 1; }
   virtual inline int MinTopBlobs() const { return 1; }
   virtual inline bool EqualNumBottomTopBlobs() const { return true; }
+  
+  // Functions for FCN2CNN
+  virtual inline void set_kstride(int kstride) {
+    CHECK(kstride_h_ ==kstride_w_) << "kstride_h_ should be equal to kstride_w_";
+    kstride_w_ = kstride_h_ = kstride;
+  }
+
+  virtual inline void set_pad(int pad) {
+    CHECK(pad_h_ == pad_w_) << "pad_h_ should be equal to pad_w";
+    pad_h_ = pad_w_ = pad;
+  }
+
+  virtual inline int get_stride() {
+    CHECK(stride_h_ == stride_w_) << "stride_h_ should be equal to stride_w_";
+    return stride_h_;
+  }
+
+  virtual inline void set_stride(int stride) {
+    stride_h_ = stride_w_ = stride;
+  }
+  
+  virtual inline void update_is1x1() {
+    is_1x1_ = kernel_w_ == 1 && kernel_h_ == 1
+      && stride_h_ == 1 && stride_w_ == 1 && pad_h_ == 0 && pad_w_ == 0;
+  }
+  
+  virtual inline void update_ext_stride() {
+    ext_kernel_h_ = (kernel_h_ - 1) * kstride_h_ + 1;
+    ext_kernel_w_ = (kernel_w_ - 1) * kstride_w_ + 1;
+  }
+  
+  virtual inline int get_kernel_size() {
+    CHECK(kernel_h_ == kernel_w_) << "FCN requires the width and height of a kernel be equal.";
+    return kernel_h_;
+  }
+
+
+
+
+
+
 
  protected:
   // Helper functions that abstract away the column buffer and gemm arguments.
@@ -56,6 +97,9 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   void weight_gpu_gemm(const Dtype* col_input, const Dtype* output, Dtype*
       weights);
   void backward_gpu_bias(Dtype* bias, const Dtype* input);
+  void fcn_weight_gpu_gemm(const Dtype* col_input, const Dtype* output, Dtype*
+      weights);
+
 #endif
 
   // reverse_dimensions should return true iff we are implementing deconv, so
@@ -65,6 +109,8 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   virtual void compute_output_shape() = 0;
 
   int kernel_h_, kernel_w_;
+  int ext_kernel_h_, ext_kernel_w_;
+  int kstride_h_, kstride_w_;
   int stride_h_, stride_w_;
   int num_;
   int channels_;
@@ -80,7 +126,7 @@ class BaseConvolutionLayer : public Layer<Dtype> {
   // wrap im2col/col2im so we don't have to remember the (long) argument lists
   inline void conv_im2col_cpu(const Dtype* data, Dtype* col_buff) {
     im2col_cpu(data, conv_in_channels_, conv_in_height_, conv_in_width_,
-        kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, col_buff);
+        kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, col_buff, kstride_h_, kstride_w_);
   }
   inline void conv_col2im_cpu(const Dtype* col_buff, Dtype* data) {
     col2im_cpu(col_buff, conv_in_channels_, conv_in_height_, conv_in_width_,
@@ -89,12 +135,22 @@ class BaseConvolutionLayer : public Layer<Dtype> {
 #ifndef CPU_ONLY
   inline void conv_im2col_gpu(const Dtype* data, Dtype* col_buff) {
     im2col_gpu(data, conv_in_channels_, conv_in_height_, conv_in_width_,
-        kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, col_buff);
+        kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, col_buff, kstride_h_, kstride_w_);
   }
   inline void conv_col2im_gpu(const Dtype* col_buff, Dtype* data) {
     col2im_gpu(col_buff, conv_in_channels_, conv_in_height_, conv_in_width_,
         kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, data);
   }
+  inline void fcn_im2col_gpu(const Dtype* data, Dtype* col_buff) {
+    im2col_gpu(data, conv_in_channels_, conv_in_height_, conv_in_width_,
+      height_out_, width_out_, pad_h_, pad_w_, kstride_h_, kstride_w_, col_buff, 1, 1);
+  }
+  inline void fcn_col2im_gpu(const Dtype* col_buff, Dtype* data) {
+    fcn_backward_col2im_gpu(col_buff, conv_in_channels_, conv_in_height_, conv_in_width_,
+        kernel_h_, kernel_w_, pad_h_, pad_w_, stride_h_, stride_w_, 
+	kstride_h_, kstride_w_, data);
+  }
+
 #endif
 
   int conv_out_channels_;
@@ -399,6 +455,40 @@ class PoolingLayer : public Layer<Dtype> {
             PoolingParameter_PoolMethod_MAX) ? 2 : 1;
   }
 
+// Functions for FCN2CNN
+  virtual inline void set_kstride(int kstride) {
+    CHECK(kstride_h_ ==kstride_w_) << "kstride_h_ should be equal to kstride_w_";
+    kstride_w_ = kstride_h_ = kstride;
+  }
+
+  virtual inline void set_pad(int pad) {
+    CHECK(pad_h_ == pad_w_) << "pad_h_ should be equal to pad_w";
+    pad_h_ = pad_w_ = pad;
+  }
+
+  virtual inline int get_stride() {
+    CHECK(stride_h_ == stride_w_) << "stride_h_ should be equal to stride_w_";
+    return stride_h_;
+  }
+
+  virtual inline void set_stride(int stride) {
+    stride_h_ = stride_w_ = stride;
+  }
+   
+  virtual inline void update_ext_stride() {
+    ext_kernel_h_ = (kernel_h_ - 1) * kstride_h_ + 1;
+    ext_kernel_w_ = (kernel_w_ - 1) * kstride_w_ + 1;
+  }
+  virtual inline void check_poolmethod(PoolingParameter_PoolMethod method) {
+    CHECK(this->layer_param_.pooling_param().pool() ==
+            PoolingParameter_PoolMethod_MAX) << "Checking pooling method fails";
+  }
+  
+  virtual inline int get_kernel_size() {
+    CHECK(kernel_h_ == kernel_w_) << "FCN requires the width and height of a kernel be equal.";
+    return kernel_h_;
+  }
+
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
@@ -410,6 +500,8 @@ class PoolingLayer : public Layer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
   int kernel_h_, kernel_w_;
+  int ext_kernel_h_, ext_kernel_w_;
+  int kstride_h_, kstride_w_;
   int stride_h_, stride_w_;
   int pad_h_, pad_w_;
   int channels_;

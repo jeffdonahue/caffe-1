@@ -67,6 +67,7 @@ class Solver {
     return test_nets_;
   }
   int iter() { return iter_; }
+  virtual void MatCaffeApplyUpdate() = 0;
 
   // Invoked at specific points during an iteration
   class Callback {
@@ -132,6 +133,9 @@ class WorkerSolver : public Solver<Dtype> {
   explicit WorkerSolver(const SolverParameter& param,
       const Solver<Dtype>* root_solver = NULL)
       : Solver<Dtype>(param, root_solver) {}
+  virtual void MatCaffeApplyUpdate() {
+    ApplyUpdate();
+  }
 
  protected:
   void ApplyUpdate() {}
@@ -159,6 +163,9 @@ class SGDSolver : public Solver<Dtype> {
       : Solver<Dtype>(param_file) { PreSolve(); }
 
   const vector<shared_ptr<Blob<Dtype> > >& history() { return history_; }
+  virtual void MatCaffeApplyUpdate() {
+    ApplyUpdate();
+  }
 
  protected:
   void PreSolve();

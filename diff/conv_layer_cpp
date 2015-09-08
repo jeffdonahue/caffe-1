@@ -1,0 +1,24 @@
+diff --git a/src/caffe/layers/conv_layer.cpp b/src/caffe/layers/conv_layer.cpp
+index c0c9f6f..754bf6e 100644
+--- a/src/caffe/layers/conv_layer.cpp
++++ b/src/caffe/layers/conv_layer.cpp
+@@ -10,9 +10,9 @@ namespace caffe {
+ 
+ template <typename Dtype>
+ void ConvolutionLayer<Dtype>::compute_output_shape() {
+-  this->height_out_ = (this->height_ + 2 * this->pad_h_ - this->kernel_h_)
++  this->height_out_ = (this->height_ + 2 * this->pad_h_ - this->ext_kernel_h_)
+       / this->stride_h_ + 1;
+-  this->width_out_ = (this->width_ + 2 * this->pad_w_ - this->kernel_w_)
++  this->width_out_ = (this->width_ + 2 * this->pad_w_ - this->ext_kernel_w_)
+       / this->stride_w_ + 1;
+ }
+ 
+@@ -37,6 +37,7 @@ void ConvolutionLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+ template <typename Dtype>
+ void ConvolutionLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
++  CHECK((this->kstride_h_ == 1) && (this->kstride_w_ == 1)) << "Backward_cpu is not implemented for fully convolutin.";
+   const Dtype* weight = this->blobs_[0]->cpu_data();
+   Dtype* weight_diff = this->blobs_[0]->mutable_cpu_diff();
+   if (this->param_propagate_down_[0]) {

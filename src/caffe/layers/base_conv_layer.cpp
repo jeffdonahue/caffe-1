@@ -29,6 +29,11 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       && conv_param.has_stride_w())
       || (!conv_param.has_stride_h() && !conv_param.has_stride_w()))
       << "Stride is stride OR stride_h and stride_w are required.";
+  CHECK((!conv_param.has_kstride() && conv_param.has_kstride_h() 
+       && conv_param.has_kstride_w())
+      || (!conv_param.has_kstride_h() && !conv_param.has_kstride_w()))
+      << "kstride is kstride OR kstride_h and kstride_w are required.";
+
   if (conv_param.has_kernel_size()) {
     kernel_h_ = kernel_w_ = conv_param.kernel_size();
   } else {
@@ -49,6 +54,18 @@ void BaseConvolutionLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
     stride_h_ = conv_param.stride_h();
     stride_w_ = conv_param.stride_w();
   }
+  if (!conv_param.has_kstride_h()) {
+    kstride_h_ = kstride_w_ = conv_param.kstride();
+  } else {
+    kstride_h_ = conv_param.kstride_h();
+    kstride_w_ = conv_param.kstride_w();
+  }
+  if (!(kstride_h_ == 1)) {
+    CHECK_EQ(stride_h_, 1) << "Currently, when using kstride, the stride parameter should be fixed to 1.";
+    CHECK_EQ(stride_w_, 1) << "Currently, when using kstride, the stride parameter should be fixed to 1.";
+  }
+  ext_kernel_h_ = (kernel_h_ - 1) * kstride_h_ + 1;
+  ext_kernel_w_ = (kernel_w_ - 1) * kstride_w_ + 1;
   // Special case: im2col is the identity for 1x1 convolution with stride 1
   // and no padding, so flag for skipping the buffer and transformation.
   is_1x1_ = kernel_w_ == 1 && kernel_h_ == 1
@@ -264,7 +281,11 @@ void BaseConvolutionLayer<Dtype>::backward_gpu_gemm(const Dtype* output,
         (Dtype)0., col_buff + col_offset_ * g);
   }
   if (!is_1x1_) {
-    conv_col2im_gpu(col_buff, input);
+    if (kstride_h_ == 1) {
+      conv_col2im_gpu(col_buff, input);
+    } else {
+      fcn_col2im_gpu(col_buff, input);
+    }
   }
 }
 
@@ -282,6 +303,28 @@ void BaseConvolutionLayer<Dtype>::weight_gpu_gemm(const Dtype* input,
         (Dtype)1., output + output_offset_ * g, col_buff + col_offset_ * g,
         (Dtype)1., weights + weight_offset_ * g);
   }
+}
+
+template <typename Dtype>
+void BaseConvolutionLayer<Dtype>::fcn_weight_gpu_gemm(const Dtype* input,
+    const Dtype* output, Dtype* weights) {
+  const Dtype* col_buff = input;
+  if (!is_1x1_) {
+    fcn_im2col_gpu(input, col_buffer_.mutable_gpu_data());
+    col_buff = col_buffer_.gpu_data();
+  }
+  for (int g = 0; g < group_; ++g) {
+//    LOG(INFO) << "Start caffe_gpu_gemm";
+    //caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_,
+    //    conv_out_spatial_dim_, kernel_dim_ / group_,
+    //    (Dtype)1., output + output_offset_ * g, col_buff + col_offset_ * g,
+    //    (Dtype)1., weights + weight_offset_ * g);
+    caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, conv_out_channels_ / group_,
+         kernel_dim_ / group_, conv_out_spatial_dim_,
+        (Dtype)1., output + output_offset_ * g, col_buff + col_offset_ * g,
+        (Dtype)1., weights + weight_offset_ * g);
+  }
+  //LOG(INFO) << "end caffe_gpu_gemm";
 }
 
 template <typename Dtype>
