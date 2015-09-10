@@ -211,27 +211,34 @@ class LSTMUnitLayer : public Layer<Dtype> {
  public:
   explicit LSTMUnitLayer(const LayerParameter& param)
       : Layer<Dtype>(param) {}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
   virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top);
 
   virtual inline const char* type() const { return "LSTMUnit"; }
-  virtual inline int ExactNumBottomBlobs() const { return 3; }
+  virtual inline int MinBottomBlobs() const { return 4; }
+  virtual inline int MaxBottomBlobs() const { return 5; }
   virtual inline int ExactNumTopBlobs() const { return 2; }
 
   virtual inline bool AllowForceBackward(const int bottom_index) const {
     // Can't propagate to sequence continuation indicators.
-    return bottom_index != 2;
+    return bottom_index != 3;
   }
 
  protected:
-  /**
+ /**
    * @param bottom input Blob vector (length 3)
    *   -# @f$ (1 \times N \times D) @f$
    *      the previous timestep cell state @f$ c_{t-1} @f$
+   *   -# @f$ (1 \times N \times D) @f$
+   *      the previous timestep hidden state @f$ h_{t-1} @f$
    *   -# @f$ (1 \times N \times 4D) @f$
-   *      the "gate inputs" @f$ [i_t', f_t', o_t', g_t'] @f$
-   *   -# @f$ (1 \times N) @f$
+   *      the W_xc_x @f$ W_xc_x @f$
+   *   -# @f$ (1 \times 1 \times N) @f$
    *      the sequence continuation indicators  @f$ \delta_t @f$
+   *   -# @f$ (1 \times N \times 4D) @f$ (optional)
+   *      the W_xc_x_{static} @f$ W_xc_x_{static} @f$ 
    * @param top output Blob vector (length 2)
    *   -# @f$ (1 \times N \times D) @f$
    *      the updated cell state @f$ c_t @f$, computed as:
