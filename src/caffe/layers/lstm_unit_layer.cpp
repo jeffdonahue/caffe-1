@@ -45,7 +45,7 @@ void LSTMUnitLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     if (i == 3)
       CHECK_EQ(2, bottom[i]->num_axes());
     else
-	  CHECK_EQ(3, bottom[i]->num_axes());
+      CHECK_EQ(3, bottom[i]->num_axes());
       CHECK_EQ(1, bottom[i]->shape(0));
   }
   const int num_instances = bottom[0]->shape(1);
