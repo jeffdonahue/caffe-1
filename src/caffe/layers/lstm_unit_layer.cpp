@@ -70,7 +70,6 @@ void LSTMUnitLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
 template <typename Dtype>
 void LSTMUnitLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
-
   const int num = bottom[0]->shape(1);
   const int x_dim = hidden_dim_ * 4;
   const Dtype* C_prev = bottom[0]->cpu_data();
