@@ -2,8 +2,8 @@
 #include <cmath>
 #include <vector>
 
-#include "caffe/layer.hpp"
 #include "caffe/filler.hpp"
+#include "caffe/layer.hpp"
 #include "caffe/sequence_layers.hpp"
 
 namespace caffe {
@@ -22,7 +22,8 @@ template <typename Dtype>
 void LSTMUnitLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
       const vector<Blob<Dtype>*>& top) {
   if (this->blobs_.size() > 0) {
-    LOG(INFO) << this->layer_param_.name() << " Skipping parameter initialization";
+    LOG(INFO) << this->layer_param_.name()
+        << " Skipping parameter initialization";
   } else {
     this->blobs_.resize(1);
     // Intialize the weight
@@ -42,10 +43,10 @@ void LSTMUnitLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
     const vector<Blob<Dtype>*>& top) {
   for (int i = 0; i < MinBottomBlobs(); ++i) {
     if (i == 3)
-	 CHECK_EQ(2, bottom[i]->num_axes());
-    else 
-	 CHECK_EQ(3, bottom[i]->num_axes());
-    CHECK_EQ(1, bottom[i]->shape(0));
+      CHECK_EQ(2, bottom[i]->num_axes());
+    else
+	  CHECK_EQ(3, bottom[i]->num_axes());
+      CHECK_EQ(1, bottom[i]->shape(0));
   }
   const int num_instances = bottom[0]->shape(1);
   hidden_dim_ = bottom[0]->shape(2);
@@ -55,7 +56,7 @@ void LSTMUnitLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
   CHECK_EQ(4 * hidden_dim_, bottom[2]->shape(2));
   CHECK_EQ(1, bottom[3]->shape(0));
   CHECK_EQ(num_instances, bottom[3]->shape(1));
-  if(bottom.size() > 4) {
+  if (bottom.size() > 4) {
     CHECK_EQ(2, bottom[4]->num_axes());
     CHECK_EQ(num_instances, bottom[4]->shape(0));
     CHECK_EQ(4 * hidden_dim_, bottom[4]->shape(1));
@@ -80,7 +81,7 @@ void LSTMUnitLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   Dtype* H = top[1]->mutable_cpu_data();
   Dtype *buffer_h_ptr = bottom[1]->mutable_cpu_diff();
   caffe_copy(bottom[1]->count(), H_prev, buffer_h_ptr);
-  
+
   // H_prev(flush <= 0) = 0
   for (int n = 0; n < num; ++n) {
     if (flush[n] <= 0)
@@ -89,15 +90,16 @@ void LSTMUnitLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
   }
 
   // X = W_h * H_prev + X
-  caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, num, x_dim, hidden_dim_, (Dtype)1.,
-      bottom[1]->cpu_diff(), this->blobs_[0]->cpu_data(), (Dtype)1., X);
-  if(bottom.size() > 4) 
+  caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasTrans, num, x_dim, hidden_dim_,
+    (Dtype)1., bottom[1]->cpu_diff(), this->blobs_[0]->cpu_data(),
+    (Dtype)1., X);
+  if (bottom.size() > 4)
     caffe_add(x_dim * num, X, bottom[4]->cpu_data(), X);
   for (int n = 0; n < num; ++n) {
     for (int d = 0; d < hidden_dim_; ++d) {
       const Dtype i = sigmoid(X[d]);
       const Dtype f = flush[n] <= 0 ? 0 :
-          sigmoid(X[1 * hidden_dim_ + d]); // origin: *flush * sigmoid(X[1 * hidden_dim_ + d])
+          sigmoid(X[1 * hidden_dim_ + d]);
       const Dtype o = sigmoid(X[2 * hidden_dim_ + d]);
       const Dtype g = tanh(X[3 * hidden_dim_ + d]);
       const Dtype c_prev = C_prev[d];
@@ -117,7 +119,7 @@ template <typename Dtype>
 void LSTMUnitLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
   CHECK(!propagate_down[3]) << "Cannot backpropagate to sequence indicators.";
-  if (!propagate_down[0] && !propagate_down[1] && !propagate_down[2] ) { return; }
+  if (!propagate_down[0] && !propagate_down[1] && !propagate_down[2] ) return;
 
   const int num = bottom[0]->shape(1);
   const int x_dim = hidden_dim_ * 4;
@@ -134,7 +136,7 @@ void LSTMUnitLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     for (int d = 0; d < hidden_dim_; ++d) {
       const Dtype i = sigmoid(X[d]);
       const Dtype f = flush[n] <= 0 ? 0 :
-          sigmoid(X[1 * hidden_dim_ + d]); // origin: *flush * sigmoid(X[1 * hidden_dim_ + d])
+          sigmoid(X[1 * hidden_dim_ + d]);
       const Dtype o = sigmoid(X[2 * hidden_dim_ + d]);
       const Dtype g = tanh(X[3 * hidden_dim_ + d]);
       const Dtype c_prev = C_prev[d];
@@ -163,13 +165,15 @@ void LSTMUnitLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     C_prev_diff += hidden_dim_;
   }
   X_diff = bottom[2]->mutable_cpu_diff();
-  if(bottom.size() > 4) 
+  if (bottom.size() > 4)
     caffe_copy(num * x_dim, X_diff, bottom[4]->mutable_cpu_diff());
   Dtype * H_prev_diff = bottom[1]->mutable_cpu_diff();
-  caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, x_dim, hidden_dim_, num, (Dtype)1.,
-        X_diff, H_prev_diff, (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
-  caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, hidden_dim_, x_dim, (Dtype)1.,
-        X_diff, this->blobs_[0]->cpu_data(), (Dtype)0., H_prev_diff);
+  caffe_cpu_gemm<Dtype>(CblasTrans, CblasNoTrans, x_dim, hidden_dim_, num,
+    (Dtype)1., X_diff, H_prev_diff,
+    (Dtype)1., this->blobs_[0]->mutable_cpu_diff());
+  caffe_cpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, hidden_dim_, x_dim,
+    (Dtype)1., X_diff, this->blobs_[0]->cpu_data(),
+    (Dtype)0., H_prev_diff);
   for (int n = 0; n < num; ++n) {
     if (flush[n] <= 0)
       caffe_set(hidden_dim_, Dtype(0), H_prev_diff);

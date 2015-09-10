@@ -53,10 +53,10 @@ __global__ void LSTMUnitForward(const int nthreads, const int dim,
 
 template <typename Dtype>
 __global__ void indicator(const int count, const int dim,
-    const Dtype *flush, Dtype *dst){
+    const Dtype *flush, Dtype *dst) {
   CUDA_KERNEL_LOOP(index, count) {
     const int n = index / dim;
-    if(flush[n] <= 0) dst[index] = 0;
+    if (flush[n] <= 0) dst[index] = 0;
   }
 }
 
@@ -76,21 +76,24 @@ void LSTMUnitLayer<Dtype>::Forward_gpu(const vector<Blob<Dtype>*>& bottom,
   Dtype *buffer_h_ptr = bottom[1]->mutable_gpu_diff();
   caffe_copy(count, H_prev, buffer_h_ptr);
   // H_prev(flush <= 0) = 0
+  // NOLINT_NEXT_LINE(whitespace/operators)
   indicator<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
       count, hidden_dim_, flush, buffer_h_ptr);
   // X = W_h * H_prev + X
-  caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans, num, x_dim, hidden_dim_, (Dtype)1.,
-      buffer_h_ptr, this->blobs_[0]->gpu_data(), (Dtype)1., X);
+  caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasTrans, num, x_dim, hidden_dim_,
+     (Dtype)1., buffer_h_ptr, this->blobs_[0]->gpu_data(), (Dtype)1., X);
   flush = bottom[3]->gpu_data();
   const int X_count = bottom[2]->count();
-  if(bottom.size() > 4) 
+  if (bottom.size() > 4)
     caffe_gpu_add(X_count, X, bottom[4]->gpu_data(), X);
   // NOLINT_NEXT_LINE(whitespace/operators)
-  LSTMActsForward<Dtype><<<CAFFE_GET_BLOCKS(X_count), CAFFE_CUDA_NUM_THREADS>>>(
+  LSTMActsForward<Dtype>
+      <<<CAFFE_GET_BLOCKS(X_count), CAFFE_CUDA_NUM_THREADS>>>(
       X_count, hidden_dim_, X, X_acts);
   CUDA_POST_KERNEL_CHECK;
   // NOLINT_NEXT_LINE(whitespace/operators)
-  LSTMUnitForward<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+  LSTMUnitForward<Dtype>
+      <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
       count, hidden_dim_, C_prev, X_acts, flush, C, H);
   CUDA_POST_KERNEL_CHECK;
 }
@@ -148,7 +151,7 @@ void LSTMUnitLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
     const vector<bool>& propagate_down,
     const vector<Blob<Dtype>*>& bottom) {
   CHECK(!propagate_down[3]) << "Cannot backpropagate to sequence indicators.";
-  if (!propagate_down[0] && !propagate_down[1] && !propagate_down[2]) { return; }
+  if (!propagate_down[0] && !propagate_down[1] && !propagate_down[2]) return;
 
   const int count = top[1]->count();
   const int num = bottom[0]->shape(1);
@@ -172,14 +175,16 @@ void LSTMUnitLayer<Dtype>::Backward_gpu(const vector<Blob<Dtype>*>& top,
       <<<CAFFE_GET_BLOCKS(X_count), CAFFE_CUDA_NUM_THREADS>>>(
       X_count, hidden_dim_, X_acts, X_acts_diff, X_diff);
   CUDA_POST_KERNEL_CHECK;
-  if(bottom.size() > 4) 
+  if (bottom.size() > 4)
     caffe_copy(X_count, X_diff, bottom[4]->mutable_gpu_diff());
   Dtype * H_prev_diff = bottom[1]->mutable_gpu_diff();
-  caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, x_dim, hidden_dim_, num, (Dtype)1.,
-        X_diff, H_prev_diff, (Dtype)1., this->blobs_[0]->mutable_gpu_diff());
-  caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, hidden_dim_, x_dim, (Dtype)1.,
-        X_diff, this->blobs_[0]->gpu_data(), (Dtype)0., H_prev_diff);
-  indicator<Dtype><<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
+  caffe_gpu_gemm<Dtype>(CblasTrans, CblasNoTrans, x_dim, hidden_dim_, num,
+    (Dtype)1., X_diff, H_prev_diff,
+    (Dtype)1., this->blobs_[0]->mutable_gpu_diff());
+  caffe_gpu_gemm<Dtype>(CblasNoTrans, CblasNoTrans, num, hidden_dim_, x_dim,
+    (Dtype)1., X_diff, this->blobs_[0]->gpu_data(), (Dtype)0., H_prev_diff);
+  indicator<Dtype>
+      <<<CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>(
       count, hidden_dim_, flush, H_prev_diff);
 }
 

@@ -76,9 +76,10 @@ void LSTMLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
 
   LayerParameter hidden_param;
   hidden_param.set_type("InnerProduct");
-  InnerProductParameter *innerproduct_param = hidden_param.mutable_inner_product_param();
+  InnerProductParameter *innerproduct_param
+      = hidden_param.mutable_inner_product_param();
   innerproduct_param->set_num_output(num_output * 4);
-  innerproduct_param->mutable_weight_filler()->CopyFrom(weight_filler);   
+  innerproduct_param->mutable_weight_filler()->CopyFrom(weight_filler);
 
   // Add layer to transform all timesteps of x to the hidden state dimension.
   //     W_xc_x = W_xc * x + b_c
@@ -101,7 +102,8 @@ void LSTMLayer<Dtype>::FillUnrolledNet(NetParameter* net_param) const {
     //     W_xc_x_static = W_xc_static * x_static
     LayerParameter* x_static_transform_param = net_param->add_layer();
     x_static_transform_param->CopyFrom(hidden_param);
-    x_static_transform_param->mutable_inner_product_param()->set_bias_term(false);
+    x_static_transform_param->mutable_inner_product_param()
+        ->set_bias_term(false);
     x_static_transform_param->mutable_inner_product_param()->set_axis(1);
     x_static_transform_param->set_name("W_xc_x_static");
     x_static_transform_param->add_param()->set_name("W_xc_static");

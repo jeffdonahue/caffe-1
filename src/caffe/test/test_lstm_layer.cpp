@@ -23,6 +23,7 @@ class LSTMLayerTest : public MultiDeviceTest<TypeParam> {
     blob_bottom_vec_.push_back(&blob_bottom_flush_);
     blob_top_vec_.push_back(&blob_top_);
     unit_blob_bottom_vec_.push_back(&unit_blob_bottom_c_prev_);
+    unit_blob_bottom_vec_.push_back(&unit_blob_bottom_h_prev_);
     unit_blob_bottom_vec_.push_back(&unit_blob_bottom_x_);
     unit_blob_bottom_vec_.push_back(&unit_blob_bottom_flush_);
     unit_blob_top_vec_.push_back(&unit_blob_top_c_);
@@ -55,6 +56,7 @@ class LSTMLayerTest : public MultiDeviceTest<TypeParam> {
     unit_blob_bottom_x_.Reshape(shape);
     shape[0] = 1; shape[1] = num_instances; shape[2] = num_output_;
     unit_blob_bottom_c_prev_.Reshape(shape);
+    unit_blob_bottom_h_prev_.Reshape(shape);
     shape.resize(2);
     shape[0] = 1; shape[1] = num_instances;
     unit_blob_bottom_flush_.Reshape(shape);
@@ -65,6 +67,7 @@ class LSTMLayerTest : public MultiDeviceTest<TypeParam> {
     UniformFiller<Dtype> filler(filler_param);
     filler.Fill(&blob_bottom_);
     filler.Fill(&unit_blob_bottom_c_prev_);
+    filler.Fill(&unit_blob_bottom_h_prev_);
     filler.Fill(&unit_blob_bottom_x_);
   }
 
@@ -78,6 +81,7 @@ class LSTMLayerTest : public MultiDeviceTest<TypeParam> {
 
   Blob<Dtype> unit_blob_bottom_flush_;
   Blob<Dtype> unit_blob_bottom_c_prev_;
+  Blob<Dtype> unit_blob_bottom_h_prev_;
   Blob<Dtype> unit_blob_bottom_x_;
   Blob<Dtype> unit_blob_top_c_;
   Blob<Dtype> unit_blob_top_h_;
