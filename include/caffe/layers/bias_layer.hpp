@@ -43,8 +43,8 @@ class BiasLayer : public Layer<Dtype> {
       const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
  private:
-  int channels_;
   Blob<Dtype> bias_multiplier_;
+  int outer_dim_, bias_dim_, inner_dim_, dim_;
 };
 
 
