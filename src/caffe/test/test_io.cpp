@@ -203,6 +203,42 @@ TEST_F(IOTest, TestReadImageToCVMatResized) {
   EXPECT_EQ(cv_img.cols, 200);
 }
 
+TEST_F(IOTest, TestReadImageToCVMatMinorEdgeResized) {
+  string filename = EXAMPLES_SOURCE_DIR "images/cat.jpg";
+  // Read original image; check that its size is (360, 480)
+  {
+    cv::Mat cv_img = ReadImageToCVMat(filename, true);
+    EXPECT_EQ(cv_img.channels(), 3);
+    EXPECT_EQ(cv_img.rows, 360);
+    EXPECT_EQ(cv_img.cols, 480);
+  }
+  // Resize such that smaller edge is length 120: (360, 480) -> (120, 160)
+  {
+    cv::Mat cv_img = ReadImageToCVMatMinorEdge(filename, 120, true);
+    EXPECT_EQ(cv_img.channels(), 3);
+    EXPECT_EQ(cv_img.rows, 120);
+    EXPECT_EQ(cv_img.cols, 160);
+  }
+}
+
+TEST_F(IOTest, TestReadImageToCVMatMinorEdgeResizedRotated) {
+  string filename = EXAMPLES_SOURCE_DIR "images/cat_gray_rotated.jpg";
+  // Read original image; check that its size is (480, 360)
+  {
+    cv::Mat cv_img = ReadImageToCVMat(filename, false);
+    EXPECT_EQ(cv_img.channels(), 1);
+    EXPECT_EQ(cv_img.rows, 480);
+    EXPECT_EQ(cv_img.cols, 360);
+  }
+  // Resize such that smaller edge is length 120: (480, 360) -> (160, 120)
+  {
+    cv::Mat cv_img = ReadImageToCVMatMinorEdge(filename, 120, false);
+    EXPECT_EQ(cv_img.channels(), 1);
+    EXPECT_EQ(cv_img.rows, 160);
+    EXPECT_EQ(cv_img.cols, 120);
+  }
+}
+
 TEST_F(IOTest, TestReadImageToCVMatResizedSquare) {
   string filename = EXAMPLES_SOURCE_DIR "images/cat.jpg";
   cv::Mat cv_img = ReadImageToCVMat(filename, 256, 256);

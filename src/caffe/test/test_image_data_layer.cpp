@@ -1,4 +1,5 @@
 #ifdef USE_OPENCV
+#include <algorithm>
 #include <map>
 #include <string>
 #include <vector>
@@ -141,6 +142,92 @@ TYPED_TEST(ImageDataLayerTest, TestReshape) {
   EXPECT_EQ(this->blob_top_data_->channels(), 3);
   EXPECT_EQ(this->blob_top_data_->height(), 323);
   EXPECT_EQ(this->blob_top_data_->width(), 481);
+}
+
+TYPED_TEST(ImageDataLayerTest, TestReshapeMinorEdgeLength) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter param;
+  ImageDataParameter* image_data_param = param.mutable_image_data_param();
+  image_data_param->set_minor_edge_length(120);
+  image_data_param->set_batch_size(1);
+  image_data_param->set_source(this->filename_reshape_.c_str());
+  image_data_param->set_shuffle(false);
+  ImageDataLayer<Dtype> layer(param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  EXPECT_EQ(this->blob_top_label_->num(), 1);
+  EXPECT_EQ(this->blob_top_label_->channels(), 1);
+  EXPECT_EQ(this->blob_top_label_->height(), 1);
+  EXPECT_EQ(this->blob_top_label_->width(), 1);
+  for (int i = 0; i < 5; ++i) {
+    // cat.jpg: (360, 480) -> (120, 160)
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    EXPECT_EQ(this->blob_top_data_->num(), 1);
+    EXPECT_EQ(this->blob_top_data_->channels(), 3);
+    EXPECT_EQ(this->blob_top_data_->height(), 120);
+    EXPECT_EQ(this->blob_top_data_->width(), 160);
+    // fish-bike.jpg: (323, 481) -> (120, round(481/323 * 120))
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    EXPECT_EQ(this->blob_top_data_->num(), 1);
+    EXPECT_EQ(this->blob_top_data_->channels(), 3);
+    EXPECT_EQ(this->blob_top_data_->height(), 120);
+    const double ratio = static_cast<double>(481) / 323;
+    const int expected_width = static_cast<int>(ratio * 120 + 0.5);
+    EXPECT_EQ(this->blob_top_data_->width(), expected_width);
+  }
+}
+
+TYPED_TEST(ImageDataLayerTest, TestReshapeMinorEdgeLengthRange) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter param;
+  ImageDataParameter* image_data_param = param.mutable_image_data_param();
+  const int kMinorEdgeLength = 120;
+  image_data_param->set_minor_edge_length(kMinorEdgeLength);
+  const int kMinorEdgeMaxLength = 122;
+  image_data_param->set_minor_edge_max_length(kMinorEdgeMaxLength);
+  image_data_param->set_batch_size(1);
+  image_data_param->set_source(this->filename_reshape_.c_str());
+  image_data_param->set_shuffle(false);
+  ImageDataLayer<Dtype> layer(param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  EXPECT_EQ(this->blob_top_label_->num(), 1);
+  EXPECT_EQ(this->blob_top_label_->channels(), 1);
+  EXPECT_EQ(this->blob_top_label_->height(), 1);
+  EXPECT_EQ(this->blob_top_label_->width(), 1);
+  int height, max_height = 0, min_height = INT_MAX;
+  for (int i = 0; i < 10; ++i) {
+    {
+      // cat.jpg: (360, 480)
+      layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+      EXPECT_EQ(this->blob_top_data_->num(), 1);
+      EXPECT_EQ(this->blob_top_data_->channels(), 3);
+      height = this->blob_top_data_->height();
+      EXPECT_GE(height, kMinorEdgeLength);
+      EXPECT_LE(height, kMinorEdgeMaxLength);
+      max_height = std::max(max_height, height);
+      min_height = std::min(min_height, height);
+      const double ratio = static_cast<double>(480) / 360;
+      const int expected_width = static_cast<int>(ratio * height + 0.5);
+      EXPECT_EQ(this->blob_top_data_->width(), expected_width);
+    }
+    {
+      // fish-bike.jpg: (323, 481)
+      layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+      EXPECT_EQ(this->blob_top_data_->num(), 1);
+      EXPECT_EQ(this->blob_top_data_->channels(), 3);
+      height = this->blob_top_data_->height();
+      EXPECT_GE(height, kMinorEdgeLength);
+      EXPECT_LE(height, kMinorEdgeMaxLength);
+      max_height = std::max(max_height, height);
+      min_height = std::min(min_height, height);
+      const double ratio = static_cast<double>(481) / 323;
+      const int expected_width = static_cast<int>(ratio * height + 0.5);
+      EXPECT_EQ(this->blob_top_data_->width(), expected_width);
+    }
+  }
+  // Check that the entire range of possible sizes was seen.
+  // (Not true in general, but likely with only 3 possible sizes and 20 trials.)
+  EXPECT_EQ(max_height, kMinorEdgeMaxLength);
+  EXPECT_EQ(min_height, kMinorEdgeLength);
 }
 
 TYPED_TEST(ImageDataLayerTest, TestShuffle) {

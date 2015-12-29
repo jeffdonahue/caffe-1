@@ -40,6 +40,9 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
 
   vector<std::pair<std::string, int> > lines_;
   int lines_id_;
+
+  /// @brief the size of the range of minor edge length options
+  int num_length_choices_;
 };
 
 

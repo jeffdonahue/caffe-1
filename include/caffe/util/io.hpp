@@ -130,6 +130,13 @@ bool DecodeDatumNative(Datum* datum);
 bool DecodeDatum(Datum* datum, bool is_color);
 
 #ifdef USE_OPENCV
+/**
+ * @brief Resizes the given original cv::Mat such that the shorter edge has
+ *        length minor_edge_size, and the longer edge is scaled appropriately.
+ */
+cv::Mat ReadImageToCVMatMinorEdge(const string& filename,
+    const int minor_edge_size, const bool is_color);
+
 cv::Mat ReadImageToCVMat(const string& filename,
     const int height, const int width, const bool is_color = true);
 

@@ -1,6 +1,7 @@
 #ifdef USE_OPENCV
 #include <opencv2/core/core.hpp>
 
+#include <algorithm>
 #include <fstream>  // NOLINT(readability/streams)
 #include <iostream>  // NOLINT(readability/streams)
 #include <string>
@@ -26,6 +27,16 @@ template <typename Dtype>
 cv::Mat ImageDataLayer<Dtype>::ReadCurrentImageToCVMat() {
   const ImageDataParameter& param = this->layer_param_.image_data_param();
   const string& image_filename = param.root_folder() + lines_[lines_id_].first;
+  int minor_edge_length = param.minor_edge_length();
+  if (minor_edge_length > 0) {
+    if (num_length_choices_ > 1) {
+      minor_edge_length += this->data_transformer_->Rand(num_length_choices_);
+    }
+    cv::Mat image = ReadImageToCVMatMinorEdge(image_filename, minor_edge_length,
+                                              param.is_color());
+    CHECK(image.data) << "Could not load " << image_filename;
+    return image;
+  }
   cv::Mat image = ReadImageToCVMat(image_filename,
       param.new_height(), param.new_width(), param.is_color());
   CHECK(image.data) << "Could not load " << image_filename;
@@ -38,9 +49,22 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   const ImageDataParameter& param = this->layer_param_.image_data_param();
   const int new_height = param.new_height();
   const int new_width = param.new_width();
+  const int minor_edge_length = param.minor_edge_length();
+
+  CHECK((new_height == 0 && new_width == 0) || (minor_edge_length == 0))
+      << "Both new_height+new_width and minor_edge_length may not be set.";
   CHECK((new_height == 0 && new_width == 0) ||
       (new_height > 0 && new_width > 0)) << "Current implementation requires "
       "new_height and new_width to be set at the same time.";
+  CHECK_GE(minor_edge_length, 0) << "minor_edge_length must be non-negative";
+  if (param.has_minor_edge_max_length()) {
+    CHECK_GT(minor_edge_length, 0) << "If minor_edge_max_length is set, "
+        << "minor_edge_length must also be set.";
+    CHECK_GE(param.minor_edge_max_length(), minor_edge_length)
+        << "minor_edge_max_length must be at least minor_edge_length.";
+  }
+  num_length_choices_ =
+      std::max<int>(1, param.minor_edge_max_length() - minor_edge_length + 1);
   // Read the file with filenames and labels
   const string& source = param.source();
   LOG(INFO) << "Opening file " << source;

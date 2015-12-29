@@ -70,6 +70,41 @@ void WriteProtoToBinaryFile(const Message& proto, const char* filename) {
 }
 
 #ifdef USE_OPENCV
+inline cv::Mat ResizeCVMat(const cv::Mat& original,
+                           const int height, const int width) {
+  cv::Mat cv_img;
+  cv::resize(original, cv_img, cv::Size(width, height));
+  return cv_img;
+}
+
+inline int ScaleAndRoundEdgeSize(const double orig_size_a,
+    const int scaled_size_a, const double orig_size_b) {
+  const double scale_factor = scaled_size_a / orig_size_a;
+  const double scaled_size_b = orig_size_b * scale_factor;
+  return static_cast<int>(scaled_size_b + 0.5);  // round
+}
+
+inline cv::Mat ResizeCVMatMinorEdge(const cv::Mat& original,
+                                    const int minor_edge_size) {
+  const double in_rows = original.rows;
+  const double in_cols = original.cols;
+  int out_rows, out_cols;
+  if (in_rows > in_cols) {
+    out_cols = minor_edge_size;
+    out_rows = ScaleAndRoundEdgeSize(in_cols, out_cols, in_rows);
+  } else {
+    out_rows = minor_edge_size;
+    out_cols = ScaleAndRoundEdgeSize(in_rows, out_rows, in_cols);
+  }
+  return ResizeCVMat(original, out_rows, out_cols);
+}
+
+cv::Mat ReadImageToCVMatMinorEdge(const string& filename,
+    const int minor_edge_size, const bool is_color) {
+  const cv::Mat& cv_img_origin = ReadImageToCVMat(filename, is_color);
+  return ResizeCVMatMinorEdge(cv_img_origin, minor_edge_size);
+}
+
 cv::Mat ReadImageToCVMat(const string& filename,
     const int height, const int width, const bool is_color) {
   cv::Mat orig_image = ReadImageToCVMat(filename, is_color);
