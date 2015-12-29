@@ -131,6 +131,19 @@ class DataTransformer {
    */
   virtual int Rand(int n);
 
+  /// @brief Generates a uniform random float (Dtype) in [0, 1].
+  virtual inline Dtype RandFloat() {
+    return Rand(INT_MAX) / Dtype(INT_MAX - 1);
+  }
+  /// @brief Generates a uniform random float (Dtype) in [0, max].
+  virtual inline Dtype RandFloat(const Dtype max) {
+    return RandFloat() * max;
+  }
+  /// @brief Generates a uniform random float (Dtype) in [min, max].
+  virtual inline Dtype RandFloat(const Dtype min, const Dtype max) {
+    return RandFloat(max - min) + min;
+  }
+
  protected:
   /// @brief Initialize the DataTransformer's internal RNG.
   void InitRand();
