@@ -121,7 +121,6 @@ class DataTransformer {
   vector<int> InferBlobShape(const cv::Mat& cv_img);
 #endif  // USE_OPENCV
 
- protected:
    /**
    * @brief Generates a random integer from Uniform({0, 1, ..., n-1}).
    *
@@ -132,6 +131,7 @@ class DataTransformer {
    */
   virtual int Rand(int n);
 
+ protected:
   /// @brief Initialize the DataTransformer's internal RNG.
   void InitRand();
 
