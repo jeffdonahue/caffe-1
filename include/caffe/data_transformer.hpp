@@ -20,12 +20,6 @@ class DataTransformer {
   virtual ~DataTransformer() {}
 
   /**
-   * @brief Initialize the Random number generations if needed by the
-   *    transformation.
-   */
-  void InitRand();
-
-  /**
    * @brief Applies the transformation defined in the data layer's
    * transform_param block to the data.
    *
@@ -138,10 +132,12 @@ class DataTransformer {
    */
   virtual int Rand(int n);
 
+  /// @brief Initialize the DataTransformer's internal RNG.
+  void InitRand();
+
   void Transform(const Datum& datum, Dtype* transformed_data);
   // Tranformation parameters
   TransformationParameter param_;
-
 
   shared_ptr<Caffe::RNG> rng_;
   Phase phase_;
