@@ -230,6 +230,68 @@ TYPED_TEST(ImageDataLayerTest, TestReshapeMinorEdgeLengthRange) {
   EXPECT_EQ(min_height, kMinorEdgeLength);
 }
 
+TYPED_TEST(ImageDataLayerTest, TestReshapeMinorEdgeLengthWithDistortion) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter param;
+  ImageDataParameter* image_data_param = param.mutable_image_data_param();
+  const int kMinorEdgeLength = 6;
+  const float kMaxDistortion = 1.5;
+  image_data_param->set_minor_edge_length(kMinorEdgeLength);
+  image_data_param->set_max_distortion(kMaxDistortion);
+  image_data_param->set_batch_size(1);
+  image_data_param->set_source(this->filename_.c_str());
+  image_data_param->set_shuffle(false);
+  ImageDataLayer<Dtype> layer(param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  EXPECT_EQ(this->blob_top_label_->num(), 1);
+  EXPECT_EQ(this->blob_top_label_->channels(), 1);
+  EXPECT_EQ(this->blob_top_label_->height(), 1);
+  EXPECT_EQ(this->blob_top_label_->width(), 1);
+  // cat.jpg (height=360, width=480)
+  // Distortion factor in [2/3, 3/2] ->
+  //     height in [360 / 1.5, 360 * 1.5] = [240, 540]
+  // Resulting height in [240, 540] could be the major or minor axis:
+  // height minor (240 <= height <= width == 480) ->
+  //     output height is 6; width in range [6, (480/240)*6] = [6, 12]
+  const int kExpectedMaxWidth = 12;
+  // width minor (width == 480 <= height <= 540)
+  //     output width is 6; height in range [6, round((540/480)*6)]
+  //                                      = [6, round(6.75)]
+  //                                      = [6, 7]
+  const int kExpectedMaxHeight = 7;
+  int min_width = INT_MAX, max_width = 0;
+  int min_height = INT_MAX, max_height = 0;
+  for (int i = 0; i < 50; ++i) {
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    EXPECT_EQ(this->blob_top_data_->num(), 1);
+    EXPECT_EQ(this->blob_top_data_->channels(), 3);
+    const int height = this->blob_top_data_->height();
+    const int width = this->blob_top_data_->width();
+    if (height <= width) {
+      EXPECT_EQ(height, kMinorEdgeLength);
+      EXPECT_GE(width, kMinorEdgeLength);
+      EXPECT_LE(width, kExpectedMaxWidth);
+    }
+    if (height >= width) {
+      EXPECT_EQ(width, kMinorEdgeLength);
+      EXPECT_GE(height, kMinorEdgeLength);
+      EXPECT_LE(height, kExpectedMaxHeight);
+    }
+    max_height = std::max(max_height, height);
+    min_height = std::min(min_height, height);
+    max_width = std::max(max_width, width);
+    min_width = std::min(min_width, width);
+  }
+  // Check that we saw all the full range of possible image sizes.
+  // (Note that this is not guaranteed in general, but is reasonably likely
+  // to occur with the chosen (small) edge length and (large) number of trials,
+  // and in particular, does occur with the seed set here.)
+  EXPECT_EQ(min_width, kMinorEdgeLength);
+  EXPECT_EQ(min_height, kMinorEdgeLength);
+  EXPECT_EQ(max_width, kExpectedMaxWidth);
+  EXPECT_EQ(max_height, kExpectedMaxHeight);
+}
+
 TYPED_TEST(ImageDataLayerTest, TestShuffle) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter param;

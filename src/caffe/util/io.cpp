@@ -85,24 +85,32 @@ inline int ScaleAndRoundEdgeSize(const double orig_size_a,
 }
 
 inline cv::Mat ResizeCVMatMinorEdge(const cv::Mat& original,
-                                    const int minor_edge_size) {
-  const double in_rows = original.rows;
-  const double in_cols = original.cols;
-  int out_rows, out_cols;
-  if (in_rows > in_cols) {
-    out_cols = minor_edge_size;
-    out_rows = ScaleAndRoundEdgeSize(in_cols, out_cols, in_rows);
+    const int minor_edge_size, const double aspect_ratio_adjust) {
+  const double in_height = original.rows * aspect_ratio_adjust;
+  const double in_width = original.cols;
+  int out_height, out_width;
+  if (in_height > in_width) {
+    out_width = minor_edge_size;
+    out_height = ScaleAndRoundEdgeSize(in_width, out_width, in_height);
   } else {
-    out_rows = minor_edge_size;
-    out_cols = ScaleAndRoundEdgeSize(in_rows, out_rows, in_cols);
+    out_height = minor_edge_size;
+    out_width = ScaleAndRoundEdgeSize(in_height, out_height, in_width);
   }
-  return ResizeCVMat(original, out_rows, out_cols);
+  return ResizeCVMat(original, out_height, out_width);
+}
+
+cv::Mat ReadImageToCVMatMinorEdge(const string& filename,
+    const int minor_edge_size, const double aspect_ratio_adjust,
+    const bool is_color) {
+  const cv::Mat& orig_image = ReadImageToCVMat(filename, is_color);
+  return ResizeCVMatMinorEdge(orig_image, minor_edge_size, aspect_ratio_adjust);
 }
 
 cv::Mat ReadImageToCVMatMinorEdge(const string& filename,
     const int minor_edge_size, const bool is_color) {
-  const cv::Mat& cv_img_origin = ReadImageToCVMat(filename, is_color);
-  return ResizeCVMatMinorEdge(cv_img_origin, minor_edge_size);
+  const double kAspectRatioAdjust = 1.0;
+  return ReadImageToCVMatMinorEdge(filename, minor_edge_size,
+                                   kAspectRatioAdjust, is_color);
 }
 
 cv::Mat ReadImageToCVMat(const string& filename,

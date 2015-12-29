@@ -43,6 +43,8 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
 
   /// @brief the size of the range of minor edge length options
   int num_length_choices_;
+  /// @brief logarithm of the maximum aspect ratio distortion factor
+  Dtype log_max_distortion_;
 };
 
 

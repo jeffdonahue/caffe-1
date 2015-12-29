@@ -32,8 +32,14 @@ cv::Mat ImageDataLayer<Dtype>::ReadCurrentImageToCVMat() {
     if (num_length_choices_ > 1) {
       minor_edge_length += this->data_transformer_->Rand(num_length_choices_);
     }
+    double distortion = 1;
+    if (log_max_distortion_ > 0) {
+      const Dtype log_distortion = this->data_transformer_->RandFloat(
+          -log_max_distortion_, +log_max_distortion_);
+      distortion = std::exp(log_distortion);
+    }
     cv::Mat image = ReadImageToCVMatMinorEdge(image_filename, minor_edge_length,
-                                              param.is_color());
+                                              distortion, param.is_color());
     CHECK(image.data) << "Could not load " << image_filename;
     return image;
   }
@@ -65,6 +71,12 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   }
   num_length_choices_ =
       std::max<int>(1, param.minor_edge_max_length() - minor_edge_length + 1);
+  if (param.has_max_distortion()) {
+    CHECK_GT(minor_edge_length, 0) << "If max_distortion is set, "
+        << "minor_edge_length must also be set.";
+    CHECK_GE(param.max_distortion(), 1) << "max_distortion must be >= 1.";
+  }
+  log_max_distortion_ = std::log(param.max_distortion());
   // Read the file with filenames and labels
   const string& source = param.source();
   LOG(INFO) << "Opening file " << source;

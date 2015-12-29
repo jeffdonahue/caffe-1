@@ -133,7 +133,15 @@ bool DecodeDatum(Datum* datum, bool is_color);
 /**
  * @brief Resizes the given original cv::Mat such that the shorter edge has
  *        length minor_edge_size, and the longer edge is scaled appropriately.
+ *
+ * Treat the original image as if its height were aspect_ratio_adjust times the
+ * actual image height. If aspect_ratio_adjust != 1.0 the output image will be
+ * scaled non-uniformly.
  */
+cv::Mat ReadImageToCVMatMinorEdge(const string& filename,
+    const int minor_edge_size, const double aspect_ratio_adjust,
+    const bool is_color);
+
 cv::Mat ReadImageToCVMatMinorEdge(const string& filename,
     const int minor_edge_size, const bool is_color);
 

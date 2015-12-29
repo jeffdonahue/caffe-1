@@ -718,6 +718,14 @@ message ImageDataParameter {
   // If minor_edge_max_length is also set, the minor edge length will be
   // randomly sampled uniformly from [minor_edge_length, minor_edge_max_length].
   optional uint32 minor_edge_max_length = 14 [default = 0];
+  // When minor_edge_length is specified, max_distortion may be >= 1.0 to
+  // randomly choose an aspect ratio distortion factor in range
+  // [1 / max_distortion, max_distortion].
+  // The choice is made independently for each image by the following:
+  //   - let m := log(max_distortion)
+  //   - sample a ~ Uniform(-m, m)
+  //   - let the chosen distortion be exp(a)
+  optional float max_distortion = 15 [default = 1.0];
   // Specify if the images are color or gray
   optional bool is_color = 11 [default = true];
   // DEPRECATED. See TransformationParameter. For data pre-processing, we can do

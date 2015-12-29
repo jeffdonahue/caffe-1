@@ -239,6 +239,53 @@ TEST_F(IOTest, TestReadImageToCVMatMinorEdgeResizedRotated) {
   }
 }
 
+TEST_F(IOTest, TestReadImageToCVMatMinorEdgeRescaledSquare) {
+  string filename = EXAMPLES_SOURCE_DIR "images/cat.jpg";
+  // Read original image; check that its size is (360, 480)
+  {
+    cv::Mat cv_img = ReadImageToCVMat(filename, true);
+    EXPECT_EQ(cv_img.channels(), 3);
+    EXPECT_EQ(cv_img.rows, 360);
+    EXPECT_EQ(cv_img.cols, 480);
+  }
+  // Resize by adjusting aspect ratio such that image is square (1:1).
+  // Choose ratio 480/360 to virtually rescale from
+  // (360, 480) to (360 * (480/360), 480) = (480, 480).
+  // Resize such that smaller edge is length 120: (480, 480) -> (120, 120).
+  const double square_aspect_ratio_adjust = static_cast<double>(480) / 360;
+  {
+    cv::Mat cv_img = ReadImageToCVMatMinorEdge(filename, 120,
+        square_aspect_ratio_adjust, true);
+    EXPECT_EQ(cv_img.channels(), 3);
+    EXPECT_EQ(cv_img.rows, 120);
+    EXPECT_EQ(cv_img.cols, 120);
+  }
+}
+
+TEST_F(IOTest, TestReadImageToCVMatMinorEdgeRescaledOppositeAspect) {
+  string filename = EXAMPLES_SOURCE_DIR "images/cat.jpg";
+  // Read original image; check that its size is (360, 480)
+  {
+    cv::Mat cv_img = ReadImageToCVMat(filename, true);
+    EXPECT_EQ(cv_img.channels(), 3);
+    EXPECT_EQ(cv_img.rows, 360);
+    EXPECT_EQ(cv_img.cols, 480);
+  }
+  // Resize by adjusting aspect ratio to be the opposite of the original 3:4.
+  // Choose ratio (480/360)^2 = (4/3)^2 = 16/9 to virtually rescale from
+  // (360, 480) to (360 * 16/9, 480) = (640, 480).
+  // Resize such that smaller edge is length 120: (640, 480) -> (160, 120).
+  const double square_aspect_ratio_adjust =
+      std::pow(static_cast<double>(480) / 360, 2);
+  {
+    cv::Mat cv_img = ReadImageToCVMatMinorEdge(filename, 120,
+        square_aspect_ratio_adjust, true);
+    EXPECT_EQ(cv_img.channels(), 3);
+    EXPECT_EQ(cv_img.rows, 160);
+    EXPECT_EQ(cv_img.cols, 120);
+  }
+}
+
 TEST_F(IOTest, TestReadImageToCVMatResizedSquare) {
   string filename = EXAMPLES_SOURCE_DIR "images/cat.jpg";
   cv::Mat cv_img = ReadImageToCVMat(filename, 256, 256);
